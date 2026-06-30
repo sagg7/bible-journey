@@ -1,0 +1,1074 @@
+# PRD: App de Estudio Bíblico Cronológico con IA
+
+## 1. Nombre provisional
+
+**Chronos Bible**
+Alternativas:
+
+* Biblia en Contexto
+* Theophilus
+* Ruta Bíblica
+* Bible Journey
+* Logos Timeline
+
+---
+
+## 2. Visión del producto
+
+Crear una aplicación de estudio bíblico que ayude al usuario a entender la Biblia como una historia continua, organizada cronológicamente, enriquecida con contexto histórico, cultural, geográfico y literario, usando IA como guía de estudio personalizada.
+
+La app no busca reemplazar la Biblia ni los comentarios bíblicos, sino ayudar al usuario a responder:
+
+> ¿Qué estaba pasando, quiénes estaban vivos, dónde ocurrió, qué libros se conectan y cómo entendía esto la audiencia original?
+
+---
+
+## 3. Problema principal
+
+Muchos lectores abandonan o se confunden al leer la Biblia porque:
+
+* Los libros no están organizados estrictamente en orden cronológico.
+* Se repiten eventos en Reyes, Crónicas, Evangelios e Isaías.
+* Los Salmos, Proverbios, Eclesiastés, Cantares y epístolas están separados de sus contextos históricos.
+* Se olvidan personajes, reyes, profetas, lugares y relaciones familiares.
+* El contexto cultural se pierde.
+* Las apps bíblicas actuales funcionan más como lectoras o bibliotecas, no como guías narrativas.
+
+---
+
+## 4. Usuarios objetivo
+
+### Usuario primario
+
+Cristiano que quiere leer la Biblia de forma más clara y constante.
+
+### Usuarios secundarios
+
+* Maestros de Escuela Sabática / escuela dominical.
+* Predicadores laicos.
+* Jóvenes y adolescentes.
+* Líderes de iglesia.
+* Estudiantes de Biblia.
+* Padres que quieren enseñar a sus hijos.
+* Iglesias y escuelas cristianas.
+
+---
+
+## 5. Propuesta de valor
+
+La app convierte la lectura bíblica en una experiencia guiada, contextual y progresiva.
+
+En vez de leer libros aislados, el usuario sigue una ruta histórica donde cada pasaje aparece dentro de su momento probable.
+
+Ejemplo:
+
+David huye de Saúl
+Lecturas relacionadas:
+
+* 1 Samuel 21
+* Salmo 34
+* 1 Samuel 22
+* Salmo 52
+* 1 Samuel 24
+* Salmo 57
+
+Contexto:
+
+* Personajes vivos
+* Lugar probable
+* Conflicto político
+* Nivel de certeza
+* Aplicación espiritual
+* Preguntas para reflexión
+
+---
+
+## 6. Principios del producto
+
+1. **La Biblia primero**
+   La app debe llevar al texto bíblico, no reemplazarlo.
+
+2. **Contexto sin especulación disfrazada**
+   Toda explicación debe marcar nivel de certeza.
+
+3. **Claridad antes que erudición**
+   Explicar profundo sin sonar académico pesado.
+
+4. **IA como guía, no como autoridad absoluta**
+   La IA debe citar fuentes internas y reconocer incertidumbre.
+
+5. **Hábito antes que saturación**
+   Mejor 7 minutos diarios consistentes que una app gigantesca que nadie abre.
+
+6. **Monetización ética**
+   No cobrar por leer la Biblia básica; cobrar por herramientas avanzadas de estudio.
+
+---
+
+## 7. Alcance del producto final esperado
+
+La versión completa debería incluir:
+
+* Lectura bíblica cronológica.
+* Contexto histórico por pasaje.
+* Línea del tiempo interactiva.
+* Mapas bíblicos.
+* Genealogías.
+* Perfiles de personajes.
+* Relación entre libros y eventos.
+* Salmos ubicados en momentos probables.
+* Profetas ubicados por reinado.
+* Evangelios armonizados.
+* Epístolas ubicadas dentro de Hechos.
+* IA guía con personalidad.
+* Widget de recordatorio.
+* Quizzes adaptativos.
+* Notas personales.
+* Planes de lectura.
+* Modo maestro/predicador.
+* Suscripción premium.
+* Licencias para iglesias/escuelas.
+
+---
+
+# 8. MVP publicable
+
+## Objetivo del MVP
+
+Validar si los usuarios regresan diariamente y si valoran suficiente la experiencia contextual como para pagar por funciones premium.
+
+## Alcance del MVP
+
+El MVP debe enfocarse en una sola sección fuerte:
+
+**Vida de David + Salmos relacionados**
+
+Razón:
+
+* Es narrativamente poderosa.
+* Tiene personajes memorables.
+* Tiene muchos Salmos conectables.
+* Permite demostrar el valor del producto rápidamente.
+* Evita intentar construir toda la Biblia desde el inicio.
+
+---
+
+## 9. Funcionalidades MVP
+
+### 9.1 Lectura cronológica guiada
+
+El usuario sigue una ruta de lectura organizada por eventos.
+
+Ejemplo:
+
+1. Samuel unge a David.
+2. David y Goliat.
+3. David en la corte de Saúl.
+4. David huye.
+5. David perdona a Saúl.
+6. David en Siclag.
+7. David rey de Judá.
+8. David rey de Israel.
+9. David y Betsabé.
+10. Rebelión de Absalón.
+11. Últimos días de David.
+
+Cada evento incluye:
+
+* Título.
+* Fecha aproximada, si aplica.
+* Pasajes bíblicos.
+* Resumen breve.
+* Personajes principales.
+* Lugar.
+* Contexto histórico.
+* Nivel de certeza.
+
+---
+
+### 9.2 Integración de Salmos
+
+Insertar Salmos relacionados en el momento histórico probable.
+
+Cada Salmo debe marcar:
+
+* Relación probable con evento.
+* Evidencia textual.
+* Nivel de certeza.
+* Nota de advertencia si la asociación es debatida.
+
+Ejemplo:
+
+Salmo 34
+Relacionado con: David finge locura ante Aquis / Abimelec.
+Nivel de certeza: alto, por encabezado del Salmo.
+Pasaje narrativo: 1 Samuel 21.
+
+---
+
+### 9.3 Niveles de certeza
+
+Toda información contextual debe clasificarse así:
+
+* **Alta confianza**: basada directamente en el texto bíblico o fuerte consenso.
+* **Probable**: apoyada por evidencia interna o académica, pero no absoluta.
+* **Debatida**: existen varias posturas razonables.
+* **Tradición popular**: explicación extendida, pero evidencia débil.
+* **Especulativa**: útil como posibilidad, no como afirmación.
+
+---
+
+### 9.4 Perfil de personajes
+
+Personajes iniciales:
+
+* David
+* Saúl
+* Samuel
+* Jonatán
+* Mical
+* Abigail
+* Betsabé
+* Natán
+* Joab
+* Absalón
+* Salomón
+
+Cada perfil incluye:
+
+* Nombre.
+* Rol.
+* Primera aparición.
+* Relación con David.
+* Línea temporal básica.
+* Eventos principales.
+* Estado en la historia: vivo, muerto, activo, fuera de escena.
+
+---
+
+### 9.5 IA guía
+
+La IA debe actuar como acompañante de estudio.
+
+Nombre provisional: **Ezra**.
+
+Funciones MVP:
+
+* Responder preguntas sobre el pasaje actual.
+* Explicar contexto histórico.
+* Recordar personajes.
+* Resumir eventos anteriores.
+* Generar preguntas de reflexión.
+* Marcar incertidumbre.
+* Evitar respuestas dogmáticas cuando hay debate.
+
+Limitaciones MVP:
+
+* No debe responder libremente sobre toda la Biblia si la base no está cargada.
+* Debe trabajar con contexto controlado.
+* Debe decir “no tengo suficiente información en esta ruta” cuando aplique.
+
+---
+
+### 9.6 Widget / recordatorio
+
+Widget simple:
+
+* Progreso actual.
+* Evento donde quedó el usuario.
+* Tiempo estimado de lectura.
+* Frase de continuidad narrativa.
+
+Ejemplo:
+
+“David sigue huyendo de Saúl. Hoy: la cueva de En-gadi. 7 minutos.”
+
+---
+
+### 9.7 Progreso y hábito
+
+MVP incluye:
+
+* Racha diaria.
+* Días estudiados.
+* Eventos completados.
+* Porcentaje de la ruta de David.
+* Recordatorio configurable.
+
+Evitar:
+
+* Monedas.
+* Cofres.
+* Gamificación infantil excesiva.
+
+---
+
+### 9.8 Modelo freemium MVP
+
+Gratis:
+
+* Ruta de David parcial.
+* Lectura cronológica básica.
+* Progreso.
+* Widget.
+* IA limitada.
+
+Premium:
+
+* Ruta completa.
+* IA extendida.
+* Contexto histórico avanzado.
+* Perfiles completos.
+* Quizzes.
+* Notas personales.
+
+Precio inicial sugerido:
+
+* $7.99 a $9.99 USD/mes.
+* $59 a $79 USD/año.
+
+---
+
+# 10. Funciones fuera del MVP
+
+No incluir inicialmente:
+
+* Toda la Biblia.
+* Mapas interactivos avanzados.
+* Genealogías completas.
+* Modo iglesia.
+* Certificados.
+* Audio.
+* Videos.
+* Marketplace de cursos.
+* Comentarios bíblicos modernos licenciados.
+* Múltiples traducciones protegidas sin licencia.
+* Comunidad social.
+
+Estas funciones pueden destruir el foco del MVP.
+
+---
+
+# 11. Arquitectura funcional
+
+## Entidades principales
+
+### User
+
+* id
+* name
+* email
+* subscription_status
+* preferred_language
+* reading_level
+* reminder_settings
+
+### BiblicalBook
+
+* id
+* name
+* testament
+* genre
+* traditional_author
+* notes
+
+### Passage
+
+* id
+* book_id
+* chapter_start
+* verse_start
+* chapter_end
+* verse_end
+* text_reference
+* license_source
+
+### HistoricalEvent
+
+* id
+* title
+* summary
+* approximate_date_start
+* approximate_date_end
+* date_confidence
+* location_id
+* era_id
+* certainty_level
+* sort_order
+
+### EventPassage
+
+* event_id
+* passage_id
+* relationship_type
+* certainty_level
+* explanation
+
+### Character
+
+* id
+* name
+* description
+* role
+* first_appearance
+* death_event_id
+
+### EventCharacter
+
+* event_id
+* character_id
+* role_in_event
+* status_at_event
+
+### Location
+
+* id
+* name
+* modern_equivalent
+* latitude
+* longitude
+* certainty_level
+
+### ContextNote
+
+* id
+* event_id
+* type
+* title
+* content
+* certainty_level
+* sources
+
+### PsalmConnection
+
+* id
+* psalm_reference
+* event_id
+* reasoning
+* certainty_level
+
+### UserProgress
+
+* user_id
+* route_id
+* current_event_id
+* completed_events
+* streak_count
+* last_activity_date
+
+### AIInteraction
+
+* user_id
+* event_id
+* question
+* answer
+* citations
+* model_used
+* token_cost
+* created_at
+
+---
+
+# 12. IA y contenido
+
+## Estrategia recomendada
+
+No depender 100% de IA en tiempo real.
+
+La experiencia debe funcionar con contenido preconstruido:
+
+* Eventos.
+* Resúmenes.
+* Contexto.
+* Personajes.
+* Relaciones.
+* Notas.
+* Quizzes.
+
+La IA se usa para:
+
+* Personalizar explicación.
+* Responder preguntas.
+* Crear repasos.
+* Generar reflexión.
+* Adaptar lenguaje para niños, jóvenes o adultos.
+* Preparar bosquejos.
+
+## Razón
+
+Esto reduce costos, mejora precisión y evita que la app produzca interpretaciones erráticas.
+
+---
+
+# 13. Fuentes y licencias
+
+## Texto bíblico
+
+Opciones:
+
+* Traducciones de dominio público.
+* Licencias con editoriales.
+* Permitir que el usuario elija traducción externa si la licencia lo permite.
+* Usar solo referencias bíblicas al inicio si no se cuenta con licencia.
+
+## Comentarios bíblicos
+
+Permitidos:
+
+* Comentarios de dominio público.
+* Contenido propio.
+* Resúmenes originales basados en investigación.
+
+No permitido sin licencia:
+
+* Copiar comentarios modernos.
+* Copiar notas de Biblias de estudio actuales.
+* Usar contenido de apps privadas.
+
+## Requisito importante
+
+Cada nota contextual debe guardar fuente y nivel de certeza.
+
+---
+
+# 14. Milestones
+
+## Milestone 0: Validación conceptual
+
+Duración estimada: 1 a 2 semanas.
+
+Objetivo:
+Confirmar que existe interés real.
+
+Entregables:
+
+* Landing page.
+* Demo visual en Figma.
+* Video corto explicando el concepto.
+* Lista de espera.
+* Encuesta de disposición a pagar.
+* 20 entrevistas con usuarios cristianos.
+
+Criterio de éxito:
+
+* 100 registros en lista de espera.
+* 20 entrevistas.
+* Al menos 30% dice que pagaría $7.99 a $9.99/mes.
+* 5 personas aceptan prepago o beta premium.
+
+---
+
+## Milestone 1: Prototipo navegable
+
+Duración estimada: 2 a 3 semanas.
+
+Objetivo:
+Mostrar la experiencia sin backend completo.
+
+Entregables:
+
+* Figma o app mock.
+* Ruta de David con 10 eventos.
+* 5 Salmos conectados.
+* Perfil de 5 personajes.
+* Ejemplo de IA guía.
+* Widget simulado.
+
+Criterio de éxito:
+
+* Usuarios entienden el valor en menos de 60 segundos.
+* Usuarios dicen “esto me ayudaría a no perderme”.
+* Feedback positivo de maestros o líderes.
+
+---
+
+## Milestone 2: Base de contenido inicial
+
+Duración estimada: 3 a 5 semanas.
+
+Objetivo:
+Construir la base estructurada de la ruta de David.
+
+Entregables:
+
+* 40 a 60 eventos de la vida de David.
+* 20 a 35 Salmos relacionados.
+* 10 a 15 personajes.
+* 10 lugares.
+* 60 notas contextuales.
+* Niveles de certeza.
+* Fuentes internas.
+
+Criterio de éxito:
+
+* Ruta completa legible de inicio a fin.
+* Cada conexión debatible marcada correctamente.
+* Revisión por al menos 2 personas con conocimiento bíblico.
+
+---
+
+## Milestone 3: MVP técnico privado
+
+Duración estimada: 4 a 6 semanas.
+
+Objetivo:
+Tener app funcional para beta cerrada.
+
+Entregables:
+
+* Registro/login.
+* Ruta cronológica de David.
+* Lectura por evento.
+* Progreso de usuario.
+* Perfil de personajes.
+* IA guía limitada al evento actual.
+* Recordatorios push.
+* Panel admin básico para contenido.
+* Tracking básico de uso.
+
+Criterio de éxito:
+
+* 20 beta testers activos.
+* 40% completa al menos 5 días de estudio.
+* IA responde con contexto adecuado.
+* No hay errores graves de contenido.
+
+---
+
+## Milestone 4: Primera versión publicable
+
+Duración estimada: 3 a 4 semanas después del MVP privado.
+
+Objetivo:
+Lanzar públicamente una versión mínima pero valiosa.
+
+Incluye:
+
+* Ruta completa de David.
+* Salmos relacionados.
+* IA guía limitada.
+* Progreso.
+* Widget básico.
+* Notificaciones.
+* Plan gratuito.
+* Plan premium.
+* Checkout.
+* Política de privacidad.
+* Términos.
+* Sistema básico de feedback.
+
+Criterio de publicación:
+
+* App estable.
+* Costos de IA controlados.
+* Contenido revisado.
+* Onboarding claro.
+* Monetización funcionando.
+* Usuarios pueden completar la ruta sin ayuda externa.
+
+Esta es la **primera versión publicable**.
+
+---
+
+# 15. Roadmap posterior
+
+## Versión 1.1: Mejoras de retención
+
+Objetivo:
+Mejorar hábito diario.
+
+Funciones:
+
+* Repaso inteligente.
+* Quiz después de cada evento.
+* Resumen semanal.
+* Notificaciones narrativas.
+* Ajuste de duración diaria: 5, 10, 15 minutos.
+* Modo “continúa donde te quedaste”.
+
+---
+
+## Versión 1.2: Modo maestro
+
+Objetivo:
+Servir a líderes y predicadores.
+
+Funciones:
+
+* Generar bosquejo de clase.
+* Preguntas para grupo.
+* Explicación para niños.
+* Explicación para adolescentes.
+* Exportar a PDF.
+* Compartir estudio.
+
+---
+
+## Versión 1.3: Mapas básicos
+
+Objetivo:
+Agregar contexto geográfico.
+
+Funciones:
+
+* Mapa de lugares de David.
+* Ruta de huida.
+* Ciudades principales.
+* Ubicación probable.
+* Notas geográficas.
+
+---
+
+## Versión 1.4: Vida de Salomón
+
+Objetivo:
+Ampliar narrativa.
+
+Incluye:
+
+* Transición David a Salomón.
+* Construcción del templo.
+* Sabiduría de Salomón.
+* Cantares, Proverbios y Eclesiastés ubicados por temporada probable.
+* Advertencias sobre incertidumbre literaria.
+
+---
+
+## Versión 1.5: Reino dividido
+
+Objetivo:
+Resolver una de las partes más confusas del Antiguo Testamento.
+
+Incluye:
+
+* Reyes de Israel y Judá.
+* Profetas activos por reinado.
+* Eventos paralelos entre Reyes y Crónicas.
+* Línea del tiempo dividida.
+* Contexto político.
+
+---
+
+## Versión 2.0: Profetas mayores y menores
+
+Objetivo:
+Conectar profecía con historia.
+
+Incluye:
+
+* Isaías, Jeremías, Ezequiel, Daniel.
+* Oseas, Amós, Miqueas, Jonás, etc.
+* Reino del norte.
+* Reino del sur.
+* Asiria, Babilonia y Persia.
+* Exilio y retorno.
+
+---
+
+## Versión 2.5: Evangelios armonizados
+
+Objetivo:
+Leer la vida de Jesús cronológicamente.
+
+Incluye:
+
+* Eventos de los cuatro evangelios.
+* Paralelos entre Mateo, Marcos, Lucas y Juan.
+* Contexto judío y romano.
+* Parábolas.
+* Milagros.
+* Semana de la pasión.
+* Nivel de certeza en orden de eventos.
+
+---
+
+## Versión 3.0: Hechos y cartas de Pablo
+
+Objetivo:
+Ubicar las epístolas dentro de la expansión de la iglesia.
+
+Incluye:
+
+* Viajes misioneros.
+* Cartas insertadas en momento probable.
+* Contexto de ciudades.
+* Conflictos doctrinales.
+* Relación entre Hechos y epístolas.
+* Juegos Ístmicos, ciudadanía romana, sinagogas, imperio romano.
+
+---
+
+## Versión 3.5: Biblia completa cronológica
+
+Objetivo:
+Tener toda la narrativa bíblica navegable.
+
+Incluye:
+
+* Pentateuco.
+* Jueces.
+* Monarquía.
+* Exilio.
+* Retorno.
+* Periodo intertestamentario resumido.
+* Vida de Jesús.
+* Iglesia primitiva.
+* Apocalipsis con enfoque responsable.
+
+---
+
+## Versión 4.0: Plataforma educativa
+
+Objetivo:
+Pasar de app personal a herramienta institucional.
+
+Funciones:
+
+* Licencias para iglesias.
+* Panel para maestros.
+* Grupos.
+* Tareas.
+* Certificados.
+* Progreso por alumnos.
+* Cursos temáticos.
+* Planes personalizados.
+
+---
+
+# 16. Monetización
+
+## Modelo principal
+
+Freemium con suscripción.
+
+### Gratis
+
+* Lectura cronológica básica.
+* Una ruta inicial parcial.
+* Progreso.
+* Widget.
+* IA limitada.
+
+### Premium individual
+
+Precio sugerido:
+
+* $7.99 a $9.99 USD/mes.
+* $59 a $79 USD/año.
+
+Incluye:
+
+* Rutas completas.
+* IA extendida.
+* Quizzes.
+* Contexto avanzado.
+* Perfiles completos.
+* Notas.
+* Modo maestro básico.
+
+### Plan iglesia / escuela
+
+Precio sugerido:
+
+* $199 a $999 USD/año según usuarios.
+
+Incluye:
+
+* Panel administrativo.
+* Grupos.
+* Progreso.
+* Material para clases.
+* Certificados.
+
+---
+
+# 17. Métricas de éxito
+
+## Activación
+
+* % usuarios que completan onboarding.
+* % usuarios que completan primer evento.
+* Tiempo hasta primer “momento wow”.
+
+## Retención
+
+* D1 retention.
+* D7 retention.
+* D30 retention.
+* Racha promedio.
+* Eventos completados por usuario.
+
+## Monetización
+
+* Conversión gratis a premium.
+* MRR.
+* ARPU.
+* Churn.
+* Costo IA por usuario.
+
+## Calidad
+
+* Preguntas respondidas correctamente.
+* Feedback negativo por respuesta IA.
+* Reportes de errores teológicos/históricos.
+* Contenido marcado como útil.
+
+---
+
+# 18. Riesgos
+
+## Riesgos controlables
+
+* Scope creep.
+* Costos de IA.
+* Mala UX.
+* Falta de revisión bíblica.
+* Contenido demasiado largo.
+* Notificaciones molestas.
+* Monetización agresiva.
+* Respuestas IA sin fuentes.
+
+## Riesgos estructurales
+
+* Cronología bíblica no siempre exacta.
+* Algunas asociaciones entre Salmos y eventos son inciertas.
+* Diferencias denominacionales.
+* Licencias de traducciones bíblicas.
+* Derechos de autor de comentarios modernos.
+* Sensibilidad teológica.
+* Mercado cristiano fragmentado.
+
+---
+
+# 19. Estrategia para reducir riesgos
+
+* Empezar con la vida de David.
+* Marcar nivel de certeza siempre.
+* Usar contenido propio y dominio público.
+* Separar texto bíblico de notas interpretativas.
+* Tener revisión humana.
+* No presentar especulación como hecho.
+* Controlar uso de IA con límites.
+* Preconstruir contenido principal.
+* Validar disposición a pagar antes de construir toda la Biblia.
+
+---
+
+# 20. Stack técnico sugerido
+
+## Backend
+
+Laravel
+
+## Base de datos
+
+MySQL o PostgreSQL
+
+## App móvil
+
+Flutter
+
+## Admin panel
+
+Laravel Nova, Filament o panel custom
+
+## IA
+
+Proveedor inicial:
+
+* OpenAI API
+* Anthropic
+* Gemini
+
+Estrategia futura:
+
+* RAG con base interna.
+* Cache de respuestas frecuentes.
+* Modelo local para tareas simples si conviene.
+
+## Notificaciones
+
+Firebase Cloud Messaging
+
+## Pagos
+
+Stripe
+
+## Analytics
+
+PostHog, Mixpanel o Firebase Analytics
+
+---
+
+# 21. Decisiones críticas pendientes
+
+1. Nombre final.
+2. Traducción bíblica inicial.
+3. Idioma inicial: español, inglés o ambos.
+4. Enfoque denominacional o neutral.
+5. Nivel de profundidad académica.
+6. Precio premium.
+7. Fuentes autorizadas.
+8. Quién revisará contenido bíblico.
+9. Cuánto contenido será gratis.
+10. Qué personalidad tendrá la IA guía.
+
+---
+
+# 22. Recomendación estratégica
+
+La app debe iniciar como una experiencia pequeña pero excelente.
+
+No construir “toda la Biblia con IA”.
+
+Construir primero:
+
+**La mejor experiencia del mundo para estudiar la vida de David en contexto.**
+
+Si eso funciona, el producto tiene camino natural hacia Salomón, los reyes, los profetas, Jesús y Pablo.
+
+---
+
+# 23. Nivel de riesgo
+
+**Medio.**
+
+No por la tecnología, sino por:
+
+* contenido,
+* licencias,
+* precisión,
+* foco,
+* monetización,
+* revisión teológica.
+
+---
+
+# 24. Próximo movimiento táctico concreto
+
+Crear una demo de 10 eventos de la vida de David:
+
+1. Samuel unge a David.
+2. David y Goliat.
+3. David entra al servicio de Saúl.
+4. David y Jonatán.
+5. David huye.
+6. David en Nob.
+7. David en Gat.
+8. David en la cueva de Adulam.
+9. David perdona a Saúl.
+10. David en Siclag.
+
+Cada evento debe tener:
+
+* Pasaje bíblico.
+* Resumen.
+* Personajes.
+* Lugar.
+* Contexto.
+* Salmo relacionado, si aplica.
+* Nivel de certeza.
+* Pregunta de reflexión.
+* Respuesta simulada de la IA guía.
+
+Con eso se puede validar el producto antes de invertir en la Biblia completa.

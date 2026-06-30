@@ -1,0 +1,795 @@
+# ADDENDUM OBLIGATORIO · FINAL VISUAL SYSTEM & EXCEPTION STATES
+
+Esta sección prevalece sobre cualquier instrucción anterior que entre en conflicto con ella.
+
+Los mockups visuales adjuntos representan la dirección final aprobada de Bible Journey. No los tomes como inspiración general: úsales como referencia directa para jerarquía, composición, densidad, navegación, estados y comportamiento.
+
+La aplicación debe conservar la identidad:
+
+```text
+Bible Journey Visual System v1.0
+Modern Deep + Editorial Light
+```
+
+La interfaz de lanzamiento debe ser completamente en español. No mezclar inglés y español dentro de una misma pantalla.
+
+Usar:
+
+```text
+Inicio
+Leer
+Rutas
+Ezra
+
+Lectura enfocada
+Modo de estudio
+Comparar relatos
+Continuar lectura
+Progreso de la ruta
+Conexión de hoy
+```
+
+No usar en la interfaz española:
+
+```text
+Home
+Read
+Journey
+Focus Reading
+Study Mode
+Compare Accounts
+Continue Reading
+```
+
+English debe existir como localización futura completa, no como textos aislados mezclados en la interfaz.
+
+---
+
+# 1. Sistema visual final
+
+## Navegación inferior obligatoria
+
+Debe tener exactamente cuatro tabs:
+
+```text
+Inicio
+Leer
+Rutas
+Ezra
+```
+
+No crear una quinta pestaña “Más”, “More”, “Perfil” o equivalente.
+
+Perfil, configuración, traducciones, preferencias de lectura, suscripción, notas y ajustes deben vivir fuera de la navegación principal, usando avatar, menú contextual o pantalla de configuración.
+
+---
+
+## Modern Deep
+
+Usar principalmente en:
+
+* Inicio;
+* Bible Stream;
+* Rutas;
+* Ezra;
+* Compare Accounts móvil;
+* progreso;
+* exploración;
+* pantallas de contexto;
+* navegación principal.
+
+Características:
+
+* azul carbón profundo;
+* superficies navy escalonadas;
+* violeta únicamente como acento activo;
+* bronce o ámbar para relaciones y advertencias editoriales;
+* verde para certeza alta o completado;
+* sombras discretas;
+* imágenes atmosféricas de paisajes, caminos, murallas, desiertos, valles y ciudades antiguas;
+* no usar retratos generados de personajes bíblicos como fondo principal de la experiencia.
+
+---
+
+## Editorial Light
+
+Usar principalmente en Reader y Focus Reader claros.
+
+Características:
+
+* fondo marfil o hueso;
+* tipografía serif de alta legibilidad para Escritura;
+* texto negro cálido, no gris tenue;
+* márgenes generosos;
+* interlineado cómodo;
+* acentos sobrios;
+* sin aspecto antiguo, religioso cliché o “pergamino”.
+
+---
+
+# 2. Pantallas finales aprobadas
+
+Implementar las siguientes pantallas como componentes y estados reales, no solo como mockups estáticos:
+
+1. Inicio · Modern Deep
+2. Leer · Bible Stream
+3. Ruta · La vida de David
+4. Normal Reader · Editorial Light
+5. Focus Reader · Modern Deep
+6. Focus Reader · Editorial Light
+7. Study Mode · Overview
+8. Ezra · respuesta contextual estructurada
+9. Traducciones
+10. Narrative Flow · relatos pendientes
+11. Compare Accounts · móvil
+12. Compare Accounts · tablet / escritorio
+
+Cada pantalla debe tener responsive behavior y estados de carga, vacío, error y contenido listo.
+
+---
+
+# 3. Home final
+
+La primera pantalla debe enfocarse en retomar la lectura.
+
+Orden visual obligatorio arriba del fold:
+
+```text
+1. Continuar lectura
+2. Progreso de la ruta
+3. Conexión de hoy
+```
+
+No convertir Inicio en catálogo de funcionalidades.
+
+La tarjeta principal debe permitir entender simultáneamente:
+
+```text
+Bible Stream
+La secuencia bíblica completa
+
+Ruta actual
+La vida de David
+```
+
+Pero no como dos productos distintos. Deben sentirse como dos lentes del mismo progreso.
+
+Ejemplo de estructura:
+
+```text
+Continuar lectura
+
+Bible Stream
+David es ungido por Samuel
+1 Samuel 16:1–13
+
+Ruta activa: La vida de David
+Acto I · El elegido
+
+[ Continuar lectura ]
+```
+
+La acción de cambiar entre Bible Stream y Ruta debe ser secundaria, por ejemplo:
+
+```text
+Viendo: Bible Stream ▾
+```
+
+No colocar un botón grande “Cambiar a Journey” compitiendo con `Continuar lectura`.
+
+---
+
+# 4. Bible Stream final
+
+Bible Stream debe verse más editorial y estructural que Journey.
+
+No debe parecer otra lista de tarjetas narrativas.
+
+Usar eras expandibles:
+
+```text
+Monarquía unida
+Reinado de David
+Reino dividido
+Exilio y retorno
+La vida de Jesús
+La iglesia primitiva
+```
+
+Cada Reading Set debe verse como un bloque de lectura continuo.
+
+Ejemplo:
+
+```text
+Monarquía unida
+
+David es ungido por Samuel
+1 Samuel 16:1–13
+
+David entra al servicio de Saúl
+1 Samuel 16:14–23
+
+David y Goliat
+1 Samuel 17
+```
+
+Cuando exista contenido relacionado, mostrarlo solo donde aporta valor:
+
+```text
+2 relatos relacionados
+```
+
+Al entrar a un evento:
+
+```text
+Relato principal
+2 Reyes 18:13–19:37
+
+Este acontecimiento continúa en:
+Isaías 36–37
+2 Crónicas 32:1–23
+```
+
+No llenar cada nodo con badges o etiquetas. La lectura debe seguir siendo clara.
+
+---
+
+# 5. Normal Reader y Focus Reader
+
+## Normal Reader
+
+Debe conservar:
+
+* título del evento;
+* referencia;
+* metadata compacta;
+* lectura bíblica;
+* navegación contextual;
+* controles de tipografía;
+* siguiente/anterior;
+* tarjetas de profundización únicamente al terminar el pasaje.
+
+Metadata compacta:
+
+```text
+c. 1025 a.C. · Belén · Probable · Contexto
+```
+
+No poner tarjetas de estudio arriba del texto bíblico.
+
+Al final del bloque:
+
+```text
+Conexión temática
+Personajes en escena
+Contexto del acontecimiento
+Siguiente lectura
+```
+
+Usar `Conexión temática` cuando no exista base suficiente para decir que un Salmo fue escrito durante un evento específico.
+
+Ejemplo correcto:
+
+```text
+Conexión temática
+Salmo 23
+
+Relación temática.
+No se afirma una conexión histórica directa.
+```
+
+No usar “Salmo relacionado” si la conexión histórica es debatida o no demostrable.
+
+---
+
+## Focus Reader
+
+Debe minimizar la aplicación hasta que casi parezca una página de lectura.
+
+Después de unos segundos sin interacción:
+
+* ocultar navegación inferior;
+* ocultar tarjetas;
+* minimizar título;
+* minimizar metadata;
+* ocultar acciones secundarias;
+* mantener `Aa`, menú y progreso mínimo;
+* permitir que los controles reaparezcan con un toque.
+
+Ejemplo:
+
+```text
+La vida de David · David es ungido por Samuel
+1 Samuel 16:1–13                         Aa   ⋯
+
+[ Texto bíblico ]
+
+1 de 10 eventos · 18%
+```
+
+No mostrar elementos de Study Mode ni Journey dentro de Focus Reader.
+
+---
+
+# 6. Study Mode final
+
+Study Mode y Ezra son funciones distintas.
+
+Study Mode debe ser editorial, estructurado y progresivo.
+
+Tabs:
+
+```text
+Resumen
+Contexto
+Personas
+Conexiones
+Notas
+```
+
+La pantalla inicial debe mostrar primero:
+
+```text
+Qué sucedió
+
+Por qué importa en la historia
+
+Explora más
+- Personas
+- Lugar
+- Conexión temática
+- Línea de tiempo
+```
+
+No convertirla en dashboard lleno de tarjetas.
+
+La metadata debe ser una franja compacta:
+
+```text
+1 Samuel 16:1–13 · c. 1025 a.C. · Belén · Probable
+```
+
+Cada bloque de contexto debe poder mostrar:
+
+* fuente;
+* tipo de afirmación;
+* nivel de certeza;
+* relación editorial;
+* si la información es bíblica directa, histórica o inferencia.
+
+---
+
+# 7. Ezra final
+
+Ezra debe usar el diseño de respuesta estructurada aprobado.
+
+La respuesta debe tener siempre estas secciones visibles cuando la pregunta toque cronología, autoría, contexto, relaciones entre relatos o interpretación:
+
+```text
+Respuesta directa
+Base bíblica
+Contexto histórico
+Inferencia editorial
+Nivel de certeza
+Fuentes
+```
+
+La respuesta modelo correcta para la pregunta:
+
+```text
+¿Por qué Samuel tuvo que ungir a David en secreto?
+```
+
+debe seguir esta línea:
+
+```text
+Respuesta directa
+
+Samuel temía que Saúl se enterara de que iba a ungir a otro rey y lo matara.
+
+Base bíblica
+
+1 Samuel 16:1–2
+
+“¿Cómo iré? Si Saúl lo oye, me matará.”
+
+Contexto histórico
+
+Saúl seguía siendo rey. Dios indicó a Samuel que llevara una becerra y anunciara un sacrificio como parte de su visita a Belén.
+
+Inferencia editorial
+
+La unción de David fue un acto privado que marcó el inicio de su futuro como rey, aunque todavía no ocupaba el trono.
+
+Nivel de certeza
+
+Alto · expresado directamente en el texto bíblico.
+
+Fuentes
+
+1 Samuel 16:1–13
+Master Canon Ledger
+Chronological Reading Set correspondiente
+```
+
+No decir que Saúl ya había mostrado celos personales o violencia hacia David en ese momento. Eso ocurre después.
+
+Ezra debe distinguir visualmente entre:
+
+```text
+Texto bíblico directo
+Contexto histórico
+Inferencia editorial
+Interpretación
+Aplicación personal
+```
+
+No ofrecer aplicación personal automáticamente.
+
+---
+
+# 8. Narrative Flow · relatos pendientes
+
+Esta pantalla es obligatoria.
+
+Debe aparecer cuando el usuario termina el relato principal de un Reading Set, pero existen bloques relacionados que Narrative Flow permite posponer.
+
+Ejemplo:
+
+```text
+Ezequías enfrenta a Senaquerib
+2 Reyes 18:13–19:37
+
+✓ Relato principal completado
+
+Has leído el relato principal de este acontecimiento.
+
+Este acontecimiento tiene lecturas relacionadas pendientes:
+
+Isaías 36–37
+Relato paralelo profético
+Pendiente
+
+2 Crónicas 32:1–23
+Relato complementario
+Pendiente
+```
+
+Acciones:
+
+```text
+[ Continuar la historia ]
+[ Leer relatos relacionados ahora ]
+```
+
+Estado de progreso obligatorio:
+
+```text
+Progreso narrativo
+Completado
+
+Cobertura bíblica ampliada
+2 relatos pendientes
+```
+
+Reglas:
+
+* no marcar el Reading Set como `Complete Chronological Complete`;
+* sí marcarlo como `Narrative Complete`;
+* preservar los relatos relacionados como pendientes;
+* permitir regresar desde historial, Reading Set o notificaciones;
+* explicar claramente la diferencia entre ambos tipos de progreso.
+
+No usar el texto:
+
+```text
+Este mismo acontecimiento también aparece en los siguientes libros
+```
+
+Usar:
+
+```text
+Este acontecimiento tiene lecturas relacionadas pendientes
+```
+
+porque no todo texto relacionado es un relato idéntico del mismo hecho.
+
+---
+
+# 9. Compare Accounts final
+
+## Regla esencial
+
+Compare Accounts nunca debe presentar textos distintos como si fueran una sola narrativa armonizada.
+
+Cada pasaje conserva:
+
+* libro;
+* referencia;
+* traducción;
+* rol editorial;
+* nivel de relación;
+* certeza;
+* fuente;
+* contexto.
+
+---
+
+## Compare Accounts · móvil
+
+En móvil, mostrar una cuenta a la vez mediante tabs o selector.
+
+Ejemplo:
+
+```text
+Comparar relatos
+
+[ 1 Samuel 17 ]
+[ 2 Samuel 21:19 ]
+[ 1 Crónicas 20:4–8 ]
+```
+
+No usar tres columnas estrechas de texto bíblico en móvil.
+
+Debe incluir:
+
+```text
+Resumen editorial
+Diferencias clave
+Ver notas del pasaje
+Ver fuentes
+```
+
+---
+
+## Compare Accounts · tablet y escritorio
+
+En tablet, escritorio o landscape, permitir columnas lado a lado.
+
+Características:
+
+* una columna por relato;
+* sincronización vertical opcional;
+* rol editorial visible;
+* colores semánticos discretos;
+* referencias equivalentes;
+* diferencias destacadas solo cuando estén aprobadas editorialmente;
+* resumen editorial inferior;
+* nunca fusionar párrafos entre columnas.
+
+---
+
+## Ejemplo crítico: Goliat y gigantes filisteos
+
+No usar el título:
+
+```text
+David y Goliat
+```
+
+cuando se comparen 1 Samuel 17, 2 Samuel 21:19 y 1 Crónicas 20:4–8.
+
+Usar:
+
+```text
+Relatos relacionados: Goliat y los gigantes filisteos
+```
+
+O:
+
+```text
+Goliat y los gigantes filisteos
+```
+
+Aviso superior obligatorio:
+
+```text
+Estos pasajes están relacionados, pero no narran tres veces el mismo acontecimiento. La comparación muestra cómo cada texto aporta un contexto distinto.
+```
+
+Diferencias clave obligatorias:
+
+```text
+• 1 Samuel 17 narra el encuentro entre David y Goliat.
+
+• 2 Samuel 21:19 y 1 Crónicas 20:4–8 registran conflictos posteriores con guerreros gigantes filisteos.
+
+• 2 Samuel 21:19 y 1 Crónicas 20:5 presentan una diferencia textual sobre la identidad del gigante. Bible Journey la muestra con contexto y fuentes, sin ocultarla ni fusionar los relatos.
+```
+
+No resolver esa diferencia mediante copy creativo, normalización automática o una explicación doctrinal no aprobada editorialmente.
+
+---
+
+# 10. Traducciones final
+
+Implementar pantalla móvil de traducciones agrupada por idioma y disponibilidad.
+
+```text
+Español
+Inglés
+```
+
+Estados visibles, por texto, no solo iconos:
+
+```text
+Texto completo disponible
+
+Referencia y contexto disponibles
+Texto completo pendiente de licencia
+
+Disponible mediante proveedor autorizado
+```
+
+Ejemplo:
+
+```text
+Reina-Valera Antigua (1909)
+Texto completo disponible
+
+World English Bible
+Texto completo disponible
+
+King James Version
+Texto completo disponible
+
+Nueva Versión Internacional
+Referencia y contexto disponibles
+Texto completo pendiente de licencia
+
+Reina-Valera 1960
+Referencia y contexto disponibles
+Texto completo pendiente de licencia
+```
+
+No usar checks, signos de suma o símbolos ambiguos como único indicador de licencia.
+
+---
+
+# 11. Tokens semánticos obligatorios
+
+No permitir que el equipo use colores arbitrarios.
+
+Definir tokens equivalentes a:
+
+```text
+surface-primary
+surface-raised
+surface-reader-light
+surface-reader-deep
+
+text-primary
+text-secondary
+text-muted
+text-inverse
+
+accent-primary
+accent-bronze
+
+certainty-high
+certainty-probable
+certainty-debated
+certainty-unresolved
+
+status-success
+status-warning
+status-danger
+
+border-subtle
+border-strong
+```
+
+Los estados de certeza deben usar color, icono y texto.
+
+No depender únicamente de color.
+
+---
+
+# 12. Componentes y estados requeridos
+
+Crear componentes reutilizables:
+
+```text
+AppShell
+BottomNavigation
+ReaderHeader
+ReaderMetadataStrip
+FocusReaderControls
+BibleTextRenderer
+VerseNumber
+ReadingSetHeader
+ReadingBlockCard
+ParallelReadingIndicator
+NarrativeFlowPendingSheet
+JourneyTimeline
+JourneyActHeader
+StudyOverview
+StudyExploreRow
+EzraStructuredResponse
+EzraSourceSheet
+TranslationSelector
+TranslationAvailabilityBadge
+CompareAccountsMobile
+CompareAccountsTablet
+CompareEditorialSummary
+ConfidenceBadge
+SourceBadge
+ProgressSummary
+```
+
+Crear estados explícitos para:
+
+```text
+loading
+empty
+offline
+reference_mode
+translation_unavailable
+editorial_review_required
+unresolved_chronology
+related_readings_pending
+narrative_complete
+full_chronological_complete
+compare_not_available
+source_missing
+```
+
+---
+
+# 13. Validación visual
+
+Antes de declarar el trabajo terminado:
+
+1. Crear preview real de cada pantalla.
+2. Validar contraste en Modern Deep y Editorial Light.
+3. Probar con tamaño de fuente grande.
+4. Probar con texto largo en español.
+5. Probar sin conexión.
+6. Probar Reference Mode.
+7. Probar una lectura de 20 minutos en Focus Reader.
+8. Probar un Reading Set con relatos paralelos.
+9. Probar Narrative Flow sin completar relatos relacionados.
+10. Probar Compare Accounts en móvil, tablet y landscape.
+11. Probar que Ezra no presente inferencia editorial como cita bíblica.
+12. Probar que ninguna pantalla mezcle inglés y español.
+
+Guardar capturas en:
+
+```text
+docs/design-previews/
+```
+
+Y crear:
+
+```text
+docs/BIBLE_JOURNEY_FINAL_VISUAL_QA.md
+```
+
+Con:
+
+```text
+Approved
+Needs Copy Review
+Needs Editorial Review
+Needs Licensing Review
+Needs Accessibility Review
+Blocked
+```
+
+---
+
+# 14. Regla de decisión final
+
+La prioridad visual siempre debe ser:
+
+```text
+1. Escritura
+2. Lectura continua
+3. Contexto opcional
+4. Navegación
+5. IA
+```
+
+Ezra, Study Mode, Journey, mapas, progreso, fuentes y comparaciones deben mejorar la lectura.
+
+Nunca deben competir con ella.

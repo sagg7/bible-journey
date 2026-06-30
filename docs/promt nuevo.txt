@@ -1,0 +1,1408 @@
+# Bible Journey: implementación integral de producto, diseño y motor editorial
+
+Actúa como Lead Product Engineer, Mobile UX Architect y Content-Platform Engineer para Bible Journey.
+
+No partas de cero ni reemplaces funcionalidad útil. Primero inspecciona el proyecto actual, identifica la arquitectura, pantallas, navegación, modelos, estado y componentes ya existentes. Conserva lo que sea reutilizable, pero refactoriza sin miedo lo que contradiga esta especificación.
+
+Tu trabajo no es crear una demo visual. Debes convertir el avance actual en una aplicación funcional, escalable y editorialmente seria.
+
+Los archivos adjuntos son obligatorios como fuente de verdad:
+
+1. `Bible_Journey_Master_Canon_Ledger_v1_0.xlsx`
+2. `Bible_Journey_Harmonization_Engine_Specification_v1_0.docx`
+
+Estos archivos definen la arquitectura editorial, los mapas canónicos, los bloques de lectura, los vínculos entre libros, los perfiles cronológicos, las decisiones abiertas y las reglas del Harmonization Engine.
+
+No simplifiques esos documentos a una ruta demo de David. La visión es una Biblia completa, navegable, cronológica, honesta con la incertidumbre y agradable de leer.
+
+---
+
+# 1. Objetivo del producto
+
+Bible Journey debe permitir que una persona lea toda la Biblia de manera continua, pero organizada por acontecimientos históricos, relaciones literarias, relatos paralelos, profetas, cartas, poesía y contexto.
+
+La idea central es:
+
+> La Biblia completa es la columna vertebral.
+> Bible Stream organiza la lectura.
+> Journeys ofrece lentes narrativos y temáticos.
+> Study Mode profundiza.
+> Ezra responde preguntas con fuentes y niveles de certeza.
+
+La aplicación no debe sentirse como:
+
+* una Biblia PDF;
+* una colección de tarjetas;
+* una app de cursos;
+* una app de IA con textos bíblicos dentro;
+* una armonía artificial que mezcla versículos de varios libros.
+
+Debe sentirse como una experiencia moderna, editorial y contemplativa para seguir la historia bíblica sin perderse.
+
+---
+
+# 2. Regla editorial principal
+
+Nunca fusionar, reescribir o intercalar versículos de varios libros para construir una narración artificial.
+
+Ejemplo correcto:
+
+```text
+Acontecimiento: Senaquerib amenaza Jerusalén
+
+1. 2 Reyes 18:13–19:37
+   Relato principal
+
+2. Isaías 36–37
+   Relato paralelo profético
+
+3. 2 Crónicas 32:1–23
+   Relato complementario
+```
+
+Ejemplo incorrecto:
+
+```text
+Versículo de Reyes
++
+Versículo de Isaías
++
+Versículo de Crónicas
+=
+Una narración nueva mezclada por la aplicación
+```
+
+Cada bloque bíblico debe mantenerse intacto, identificado por libro, referencia, traducción, licencia, rol editorial, fuente y nivel de certeza.
+
+La aplicación organiza la lectura. No reescribe la Escritura.
+
+---
+
+# 3. Auditar primero el proyecto existente
+
+Antes de modificar pantallas o datos:
+
+1. Revisa todo el repositorio.
+2. Identifica el stack actual.
+3. Identifica pantallas ya construidas.
+4. Identifica navegación, modelos, almacenamiento local, backend, autenticación y tema visual.
+5. Crea un archivo:
+
+```text
+docs/BIBLE_JOURNEY_IMPLEMENTATION_AUDIT.md
+```
+
+Debe incluir:
+
+* arquitectura actual;
+* pantallas existentes;
+* componentes reutilizables;
+* componentes que deben reemplazarse;
+* riesgos técnicos;
+* esquema de migración;
+* plan de implementación;
+* archivos principales que modificarás;
+* decisiones asumidas sin necesidad de preguntarme.
+
+No te detengas después del audit. Continúa con la implementación.
+
+---
+
+# 4. Dirección visual oficial
+
+Usa esta identidad visual:
+
+```text
+Bible Journey Visual System v1.0
+Modern Deep + Editorial Light Reader
+```
+
+## Personalidad visual
+
+La app debe sentirse:
+
+* moderna;
+* profunda;
+* contemplativa;
+* editorial;
+* premium;
+* tecnológica pero no futurista;
+* cálida pero no antigua;
+* seria sin parecer corporativa;
+* bíblica sin usar pergaminos cliché.
+
+Evitar:
+
+* apariencia de dashboard SaaS;
+* exceso de tarjetas;
+* exceso de iconos;
+* gradients brillantes por todos lados;
+* violetas saturados;
+* estética “AI-first”;
+* estilo Duolingo religioso;
+* ilustraciones realistas de personajes bíblicos como base de la UI.
+
+Preferir imágenes atmosféricas:
+
+* colinas;
+* caminos;
+* desiertos;
+* cuevas;
+* amaneceres;
+* murallas;
+* paisajes de Judea;
+* costas;
+* mapas sobrios;
+* texturas sutiles;
+* elementos arquitectónicos o geográficos.
+
+---
+
+## Paleta
+
+Usar una paleta equivalente a:
+
+```text
+Base oscura:
+- Navy / charcoal profundo
+- Azul noche
+- Blanco hueso para texto
+
+Acción e inteligencia:
+- Violeta profundo, solo para acciones principales, Ezra, progreso activo y elementos inteligentes
+
+Historia y humanidad:
+- Bronce o terracota apagado
+
+Estados:
+- Verde apagado: confianza alta
+- Lavanda / azul suave: probable
+- Ámbar sobrio: debatido
+- Rojo moderado: error o bloqueo editorial
+```
+
+El violeta no debe dominar toda la aplicación.
+
+Debe ser la chispa inteligente, no el dueño de toda la casa.
+
+---
+
+# 5. Temas de lectura
+
+Implementa dos temas equivalentes, ambos accesibles desde preferencias y desde el lector.
+
+## A. Modern Deep
+
+Usar para:
+
+* Home;
+* Journey;
+* Ezra;
+* exploración;
+* progreso;
+* mapas;
+* configuración;
+* navegación principal;
+* premium.
+
+Características:
+
+* fondo azul carbón;
+* acentos violeta controlados;
+* tarjetas mínimas;
+* sombras discretas;
+* tipografía sans limpia.
+
+## B. Editorial Light Reader
+
+Usar principalmente para lectura prolongada.
+
+Características:
+
+* fondo marfil muy claro;
+* texto casi negro;
+* tipografía serif para Escritura;
+* acentos bronce oscuro o violeta sobrio;
+* alto contraste;
+* sin aspecto vintage;
+* lectura cómoda bajo sol y para usuarios mayores.
+
+No llamar esto “modo claro” y “modo oscuro” en el producto principal.
+
+Usar una nomenclatura editorial, por ejemplo:
+
+```text
+Modern Deep
+Editorial Light
+```
+
+El usuario puede elegir su preferencia y la aplicación debe recordarla.
+
+---
+
+# 6. Navegación principal
+
+La barra inferior debe tener exactamente cuatro tabs:
+
+```text
+Home
+Read
+Journey
+Ezra
+```
+
+No agregar una quinta pestaña “More”.
+
+Perfil, ajustes, idioma, suscripción, notas y preferencias deben vivir en:
+
+* avatar superior;
+* menú contextual;
+* pantalla de ajustes;
+* icono de perfil.
+
+---
+
+# 7. Pantallas y flujo visual
+
+## A. Home
+
+La pantalla Home debe tener foco en continuar.
+
+Arriba del fold solo deben aparecer estas tres secciones:
+
+1. Continue Reading
+2. Journey Progress
+3. Today’s Connection
+
+No llenar el primer viewport con catálogos o demasiadas rutas.
+
+### Continue Reading
+
+Debe mostrar:
+
+```text
+The Life of David
+Act I · The Chosen One
+
+Samuel anoints David
+1 Samuel 16:1–13
+
+Continue Reading
+```
+
+También debe poder mostrar el contexto del Bible Stream:
+
+```text
+Bible Stream
+United Monarchy
+1 Samuel 16:1–13
+```
+
+El usuario debe entender que puede continuar desde dos perspectivas distintas del mismo progreso:
+
+```text
+Bible Stream
+La secuencia bíblica completa
+
+Journey
+La ruta narrativa actual
+```
+
+No son lecturas duplicadas.
+
+Son dos lentes sobre el mismo contenido.
+
+### Journey Progress
+
+Mostrar progreso narrativo, no solo porcentaje:
+
+```text
+The Chosen One
+The Warrior
+The Fugitive
+The King
+The Fall
+The Legacy
+```
+
+Mostrar dónde está el usuario sin sobrecargar.
+
+### Today’s Connection
+
+Ejemplo:
+
+```text
+Today’s Connection
+
+David is still a shepherd when Samuel anoints him.
+This image later echoes through Psalm 23.
+
+Explore the connection
+```
+
+---
+
+## B. Read
+
+Dentro de Read, implementar dos tabs superiores:
+
+```text
+Bible Stream
+Journeys
+```
+
+### Bible Stream
+
+Es el modo principal.
+
+Debe permitir elegir:
+
+```text
+Chronological Reading
+Canonical Reading
+```
+
+No construir un selector complejo todavía, pero dejar la arquitectura lista para:
+
+```text
+Complete Chronological Reading
+Narrative Flow
+Compare Accounts
+```
+
+### Journeys
+
+Mostrar rutas como lentes narrativos y temáticos, no como sustituto de la Biblia completa.
+
+Ejemplos iniciales:
+
+* The Life of David
+* The Exodus
+* The Life of Jesus
+* Paul’s Journeys
+* The Kingdom Divided
+* Exile and Return
+
+Cada Journey debe reutilizar Reading Sets existentes. Nunca duplicar contenido de forma independiente.
+
+---
+
+## C. Journey
+
+Journey debe usar estructura narrativa por actos.
+
+Ejemplo para David:
+
+```text
+Act I · The Chosen One
+Act II · The Warrior
+Act III · The Fugitive
+Act IV · The King
+Act V · The Fall
+Act VI · The Legacy
+```
+
+La vista principal debe ser una línea vertical elegante, no una lista de tarjetas gigantes.
+
+Cada evento debe incluir:
+
+* título;
+* referencia;
+* estado;
+* duración estimada;
+* indicador de completado;
+* certeza solo cuando sea relevante;
+* bloqueo premium solo si tiene valor real.
+
+No mostrar etiquetas de certeza repetidas de forma ruidosa.
+
+Ejemplo:
+
+```text
+Samuel anoints David
+1 Samuel 16:1–13
+Completed
+
+David and Goliath
+1 Samuel 17
+Continue Reading
+```
+
+Tabs secundarios dentro del Journey:
+
+```text
+Story
+Timeline
+People
+Map
+```
+
+Implementa Story primero de manera completa.
+
+Timeline, People y Map deben tener arquitectura y placeholders funcionales, no pantallas falsas.
+
+---
+
+## D. Normal Reader
+
+Esta es la pantalla más importante de toda la aplicación.
+
+Debe sentirse como una Biblia real, no como una ficha de evento.
+
+Estructura:
+
+```text
+The Life of David
+Samuel anoints David · 1 Samuel 16:1–13
+
+c. 1025 BC · Bethlehem · Probable · Context
+
+Texto bíblico...
+```
+
+Reglas:
+
+* tipografía serif para Escritura;
+* tipografía sans para UI;
+* versículos discretos;
+* márgenes amplios;
+* interlineado cómodo;
+* controles mínimos;
+* texto bíblico visualmente dominante;
+* navegación inferior visible solo en Normal Reader;
+* tarjetas de conexiones solo después de terminar el bloque;
+* no poner una tarjeta enorme de contexto antes de leer.
+
+Al terminar un bloque, mostrar:
+
+```text
+Related Psalm
+People in Scene
+Why this moment matters in the story
+Next Event
+```
+
+No mostrar esas tarjetas permanentemente arriba del texto.
+
+---
+
+## E. Focus Reading
+
+Implementar Focus Reading en ambos temas.
+
+### Focus Reading Dark
+
+Debe ocultar:
+
+* navegación inferior;
+* tarjetas;
+* tabs;
+* elementos secundarios;
+* progreso largo;
+* acciones no esenciales.
+
+Debe quedar algo parecido a:
+
+```text
+The Life of David · Samuel anoints David
+1 Samuel 16:1–13                    Aa   ⋯
+
+Texto bíblico...
+```
+
+Progreso mínimo:
+
+```text
+1 of 10 events · 18%
+```
+
+Al tocar el texto o la pantalla, los controles aparecen temporalmente.
+
+### Focus Reading Light
+
+Misma estructura con:
+
+* fondo marfil;
+* texto casi negro;
+* serif de alta legibilidad;
+* alto contraste;
+* acentos sobrios.
+
+No debe verse antigua.
+
+Debe verse como una experiencia editorial contemporánea.
+
+---
+
+## F. Study Mode
+
+Study Mode no es Ezra.
+
+Study Mode debe ser una capa editorial para profundizar en el Reading Set actual.
+
+Encabezado:
+
+```text
+Samuel anoints David
+1 Samuel 16:1–13 · c. 1025 BC · Bethlehem
+```
+
+Tabs:
+
+```text
+Overview
+Context
+People
+Connections
+Notes
+```
+
+Abrir por defecto en Overview.
+
+Contenido inicial:
+
+```text
+What happened
+Samuel privately anoints David while Saul is still king.
+
+Why it matters in the story
+This begins David’s long and dangerous path toward the throne.
+
+Explore deeper
+People · Location · Related Psalm · Timeline
+```
+
+Reglas:
+
+* progressive disclosure;
+* no abrir diez tarjetas al mismo tiempo;
+* Time, Place, Chronology y Confidence deben ser una franja compacta;
+* no usar chat aquí;
+* no imponer aplicaciones espirituales;
+* cada nota histórica debe tener fuente y nivel de certeza;
+* Notes debe permitir guardar reflexión, versículo, pregunta o bookmark.
+
+---
+
+## G. Ezra
+
+Ezra debe ser una experiencia separada.
+
+Puede abrirse como pantalla o como bottom sheet contextual desde el Reader.
+
+No debe ser un chat genérico.
+
+Debe saber:
+
+* Reading Set actual;
+* versículo o bloque activo;
+* Journey actual;
+* idioma;
+* traducción;
+* perfil cronológico seleccionado;
+* contexto editorial permitido;
+* notas o preguntas previas del usuario, si existen.
+
+Abrir con sugerencias contextuales:
+
+```text
+Why was Samuel afraid of Saul?
+Who was Jesse?
+Why was David chosen?
+What happens next?
+Show related Psalms
+```
+
+Cada respuesta de Ezra debe tener estructura visible:
+
+```text
+Direct answer
+
+Biblical basis
+
+Historical context
+
+Editorial inference, if any
+
+Confidence
+
+See sources
+```
+
+Reglas para Ezra:
+
+1. No presentar inferencias como texto bíblico.
+2. No presentar una fecha debatida como hecho.
+3. No inventar conexiones entre Salmos y eventos.
+4. No usar un tono de predicación automática.
+5. No terminar cada respuesta con “¿qué te enseña esto?”.
+6. Solo ofrecer reflexión personal si el usuario la pide.
+7. Diferenciar visualmente:
+
+   * Biblia;
+   * contexto histórico;
+   * inferencia editorial;
+   * interpretación;
+   * aplicación.
+8. No generar una cronología nueva por razonamiento libre.
+9. Consultar el Harmonization Engine y los datos editoriales aprobados.
+10. Si algo está debatido, decirlo claramente.
+
+---
+
+## H. Selector de traducciones
+
+Implementar una pantalla móvil real, no una tabla administrativa.
+
+Agrupar por idioma:
+
+```text
+Spanish
+English
+```
+
+Agrupar por disponibilidad:
+
+```text
+Full text available
+References and study context available
+```
+
+Ejemplo de UX:
+
+```text
+Reina-Valera Antigua (1909)
+Full text available
+
+World English Bible
+Full text available
+
+King James Version
+Full text available
+
+Nueva Versión Internacional
+References and study context available
+Full text availability depends on licensing.
+
+Reina-Valera 1960
+References and study context available
+Full text availability depends on licensing.
+```
+
+Reglas legales:
+
+* No mostrar texto completo de una traducción protegida sin licencia válida.
+* No simular que una traducción protegida está integrada si no lo está.
+* Reference Mode debe conservar experiencia:
+
+  * referencia;
+  * resumen editorial propio;
+  * contexto;
+  * progreso;
+  * personajes;
+  * cronología;
+  * Journey;
+  * Ezra.
+* Nunca expulsar automáticamente al usuario a otra app.
+* “Open in preferred Bible app” puede existir como acción secundaria opcional.
+
+---
+
+# 8. Arquitectura editorial: Bible Stream
+
+Bible Stream no se organiza solo por libros.
+
+Se organiza por:
+
+```text
+Era
+→ Chronological Reading Set
+→ Reading Block
+→ Biblical Passage
+```
+
+Ejemplo:
+
+```text
+Era:
+United Monarchy
+
+Chronological Reading Set:
+Solomon dedicates the temple
+
+Reading Blocks:
+1. 1 Kings 8:1–66
+   Primary account
+
+2. 2 Chronicles 5:2–7:22
+   Parallel / complementary account
+```
+
+Otro ejemplo:
+
+```text
+Era:
+Kingdom of Judah
+
+Chronological Reading Set:
+Sennacherib threatens Jerusalem
+
+Reading Blocks:
+1. 2 Kings 18:13–19:37
+   Primary account
+
+2. Isaiah 36–37
+   Parallel prophetic account
+
+3. 2 Chronicles 32:1–23
+   Complementary account
+```
+
+---
+
+# 9. Tres modos de lectura
+
+## A. Complete Chronological Reading
+
+Debe leer todos los bloques requeridos de un Reading Set antes de marcarlo como completamente terminado.
+
+Ejemplo:
+
+```text
+2 Kings 18–19
+→ Isaiah 36–37
+→ 2 Chronicles 32
+→ Next event
+```
+
+No marcar como completo un evento si el usuario dejó relatos paralelos obligatorios pendientes.
+
+Mostrar:
+
+```text
+Event fully complete
+All related biblical accounts read
+```
+
+---
+
+## B. Narrative Flow
+
+Debe permitir seguir la historia con menos repetición inmediata.
+
+Ejemplo:
+
+```text
+2 Kings 18–19
+
+This event also appears in:
+Isaiah 36–37
+2 Chronicles 32
+
+Continue the story
+Save related accounts for later
+```
+
+Pero no mentir.
+
+Mostrar claramente:
+
+```text
+Story progress complete
+Main account read
+
+Expanded Bible reading
+2 related accounts pending
+```
+
+---
+
+## C. Compare Accounts
+
+Debe permitir comparar relatos relacionados sin mezclar texto.
+
+Puede incluir:
+
+```text
+2 Kings
+Isaiah
+2 Chronicles
+```
+
+Debe soportar:
+
+* lectura individual;
+* switching por cuenta;
+* referencias relacionadas;
+* diferencias editoriales;
+* pasajes exclusivos;
+* mapa;
+* notas;
+* fuente;
+* certeza;
+* comparación visual futura lado a lado.
+
+No implementar una fusión de versículos.
+
+---
+
+# 10. Taxonomía editorial obligatoria
+
+Cada Reading Block debe tener un rol controlado.
+
+Usar valores como:
+
+```text
+Primary Account
+Parallel Account
+Complementary Account
+Prophetic Context
+Poetic Connection
+Legal / Covenant Context
+Genealogical Context
+Epistolary Context
+Supplementary Reading
+Literary Prologue
+Apocalyptic Literary Sequence
+Canonical Fallback Collection
+```
+
+No usar etiquetas improvisadas en código.
+
+Los campos de certeza deben estar normalizados:
+
+```text
+High
+Probable
+Debated
+Unresolved
+```
+
+Distinguir al menos:
+
+```text
+Event Identity Confidence
+Chronological Placement Confidence
+Relationship Confidence
+```
+
+---
+
+# 11. Integrar Master Canon Ledger y Harmonization Engine
+
+Crear una capa de datos editorial separada de la UI.
+
+No hardcodear el contenido cronológico dentro de widgets o pantallas.
+
+Usar el Master Canon Ledger como input.
+
+Debe existir un pipeline de importación que permita cargar:
+
+```text
+Bible_Journey_Master_Canon_Ledger_v1_0.xlsx
+```
+
+El importador debe:
+
+1. cargar a staging;
+2. validar columnas;
+3. validar IDs;
+4. preservar provenance;
+5. detectar capítulos faltantes;
+6. detectar duplicados;
+7. detectar relaciones sin destino;
+8. validar que cada Reading Block conserve libro y referencia;
+9. registrar errores;
+10. requerir aprobación antes de publicar.
+
+No importar directamente a producción sin revisión.
+
+---
+
+# 12. Modelo de datos mínimo
+
+Implementa entidades equivalentes a estas, adaptadas al stack actual:
+
+```text
+BibleBook
+BibleChapter
+BibleTranslation
+BiblePassage
+ChronologicalReadingSet
+ReadingBlock
+ReadingBlockRelationship
+Journey
+JourneyChapter
+JourneyReadingSet
+Character
+Location
+ContextCard
+EditorialSource
+EditorialDecision
+ChronologyProfile
+StreamPlan
+StreamPlanNode
+UserReadingProgress
+UserJourneyProgress
+Bookmark
+UserNote
+EzraConversation
+EzraMessage
+```
+
+Campos importantes:
+
+```text
+ChronologicalReadingSet:
+- id
+- canonical_title
+- user_facing_title
+- era
+- act
+- chronology_profile_id
+- placement_confidence
+- event_confidence
+- relationship_confidence
+- status
+- source_keys
+- editorial_note
+- published_at
+
+ReadingBlock:
+- id
+- reading_set_id
+- book_id
+- passage_start
+- passage_end
+- display_reference
+- role
+- required_in_complete_mode
+- shown_by_default_in_narrative_flow
+- compare_group_id
+- placement_confidence
+- source_keys
+- source_map_version
+- immutable_text_reference
+
+ReadingBlockRelationship:
+- source_block_id
+- target_block_id
+- relationship_type
+- confidence
+- rationale
+- source_keys
+- chronology_profile_id
+- approved_by
+- approved_at
+```
+
+Agregar versionado editorial:
+
+```text
+StreamPlan
+StreamPlanVersion
+EditorialApproval
+ImportBatch
+ImportValidationError
+```
+
+Nunca sobrescribir silenciosamente una decisión editorial aprobada.
+
+---
+
+# 13. Harmonization Engine
+
+Implementar el motor como una capa determinista y auditable.
+
+No usar LLM para decidir el orden de la Biblia.
+
+El LLM puede explicar datos aprobados. No puede crear relaciones editoriales ni reordenar bloques por su cuenta.
+
+El engine debe:
+
+1. recibir Reading Blocks;
+2. recibir Relationship Edges;
+3. aplicar un Chronology Profile;
+4. construir un Stream Plan versionado;
+5. producir nodos ordenados;
+6. identificar conflictos;
+7. registrar certeza;
+8. registrar rationale;
+9. exponer qué es obligatorio en Complete Mode;
+10. exponer qué puede diferirse en Narrative Flow;
+11. exponer grupos para Compare Accounts.
+
+El engine debe poder clasificar relaciones:
+
+```text
+before
+after
+parallel_account
+complementary_account
+prophetic_context
+poetic_connection
+genealogical_context
+legal_context
+epistolary_context
+canonical_fallback
+literary_sequence
+context_only
+```
+
+Reglas obligatorias:
+
+* nunca crear ciclos;
+* nunca publicar un Stream Plan con conflicto no resuelto;
+* nunca ocultar una relación debatida;
+* nunca mover Apocalipsis a una línea de eventos mundiales;
+* nunca forzar Job, Proverbios, Eclesiastés o Cantares a una fecha exacta si el ledger no lo aprueba;
+* nunca contar un bloque pendiente como leído;
+* nunca marcar todos los relatos paralelos como leídos por leer uno.
+
+---
+
+# 14. Perfiles cronológicos
+
+Implementar perfiles editoriales configurables.
+
+El perfil por defecto debe ser:
+
+```text
+Cautious Default
+```
+
+Debe preferir:
+
+* transparencia;
+* canonical fallback cuando sea necesario;
+* etiquetas claras;
+* no afirmar como hecho lo debatido;
+* no imponer una tradición específica.
+
+Soportar más adelante:
+
+```text
+Traditional Ecclesial
+Research Comparison
+```
+
+Los perfiles pueden cambiar:
+
+* orden;
+* visibilidad de alternativas;
+* notas;
+* relación entre cartas y Hechos;
+* tratamiento de Gálatas;
+* cartas de prisión;
+* cartas pastorales;
+* lentes de interpretación opcionales.
+
+Los perfiles nunca cambian:
+
+* texto bíblico;
+* referencias;
+* contenido de los pasajes;
+* derechos de traducción;
+* historial real de progreso del usuario.
+
+---
+
+# 15. Progreso del usuario
+
+Implementar progreso separado.
+
+## A. Progreso narrativo
+
+Ejemplo:
+
+```text
+The Life of David
+Act II · The Warrior
+4 of 10 events
+```
+
+## B. Cobertura bíblica real
+
+Ejemplo:
+
+```text
+Bible Coverage
+1,245 of 31,102 verses read
+```
+
+## C. Estado de Reading Set
+
+Ejemplo:
+
+```text
+Main account completed
+Parallel account pending
+Complementary account pending
+```
+
+Estados recomendados:
+
+```text
+Not Started
+In Progress
+Primary Complete
+Narrative Complete
+Complete Chronological Complete
+Deferred Related Reading
+Blocked by Profile
+Needs Editorial Review
+```
+
+No usar un solo booleano `completed`.
+
+---
+
+# 16. Validaciones y QA editorial
+
+Crear tests automáticos y comandos administrativos para validar:
+
+```text
+1. Every canonical chapter appears once in the active canon profile.
+2. No Reading Block has invalid references.
+3. No passage range overlaps incorrectly.
+4. No verse range is omitted in split chapters.
+5. No relationship edge creates a cycle.
+6. Every debated placement includes a rationale and source.
+7. Every visible context card has a source.
+8. Every public Stream Plan has an approved version.
+9. Narrative Flow does not auto-complete deferred blocks.
+10. Complete Chronological Reading requires all required blocks.
+11. Compare Accounts never renders merged Scripture.
+12. Protected translations never render full text without valid license configuration.
+```
+
+Crear un dashboard editorial o admin panel con:
+
+* import batches;
+* validation errors;
+* unresolved decisions;
+* missing sources;
+* coverage status;
+* affected Stream Plans;
+* profile-specific conflicts;
+* publish / unpublish workflow;
+* audit log.
+
+---
+
+# 17. Implementación de Ezra
+
+Ezra debe usar retrieval desde datos aprobados.
+
+Contexto mínimo enviado a Ezra:
+
+```text
+- current Reading Set
+- current Reading Block
+- current passage
+- selected translation
+- selected chronology profile
+- user language
+- approved editorial notes
+- related sources
+- certainty labels
+- relevant Journey context
+```
+
+Formato de respuesta esperado:
+
+```json
+{
+  "direct_answer": "",
+  "biblical_basis": [
+    {
+      "reference": "",
+      "summary": ""
+    }
+  ],
+  "historical_context": "",
+  "editorial_inference": "",
+  "confidence": "High | Probable | Debated | Unresolved",
+  "sources": [],
+  "optional_reflection": null
+}
+```
+
+No permitir que Ezra entregue una respuesta final sin `confidence` cuando hable de cronología, autoría, ubicación o relación entre textos.
+
+---
+
+# 18. Internacionalización
+
+La aplicación debe ser:
+
+```text
+Spanish-first
+English-ready
+```
+
+Reglas:
+
+* detectar idioma del dispositivo;
+* permitir cambiar idioma manualmente;
+* no mezclar idiomas dentro de una pantalla;
+* centralizar strings;
+* textos UI localizados;
+* referencias bíblicas adaptables;
+* traducciones agrupadas por idioma;
+* contenido editorial con idioma y fallback;
+* Ezra responde en el idioma de la interfaz o del mensaje del usuario.
+
+---
+
+# 19. Accesibilidad
+
+Implementar:
+
+* tamaño de letra configurable;
+* serif legible;
+* contraste AA mínimo;
+* modo Focus Reading;
+* soporte para lectores de pantalla;
+* áreas táctiles adecuadas;
+* navegación usable con fuente grande;
+* preferencia de tema;
+* reducir movimiento si el sistema lo pide;
+* no depender solo de color para estados de certeza.
+
+---
+
+# 20. Plan de implementación obligatorio
+
+Implementa por capas, pero no reduzcas el alcance de arquitectura.
+
+## Phase 1: Foundation
+
+* audit del proyecto;
+* design tokens;
+* navegación de cuatro tabs;
+* temas Modern Deep y Editorial Light;
+* modelos principales;
+* migraciones;
+* import batch;
+* Master Ledger importer;
+* canon coverage validator;
+* skeleton del Harmonization Engine;
+* perfiles cronológicos;
+* datos de prueba reales de David, Ezequías y Evangelios.
+
+## Phase 2: Reader and Stream
+
+* Bible Stream;
+* Complete Chronological Reading;
+* Narrative Flow;
+* Compare Accounts;
+* Normal Reader;
+* Focus Reader;
+* progreso real;
+* Reader end-state;
+* Translation selector;
+* Study Mode.
+
+## Phase 3: Journeys and Context
+
+* Journey Story View;
+* Journey Timeline;
+* Journey progress;
+* personajes;
+* context cards;
+* mapas con arquitectura extensible;
+* conexiones con Salmos;
+* notas y bookmarks.
+
+## Phase 4: Ezra
+
+* chat contextual;
+* source-aware answers;
+* confidence labels;
+* source sheet;
+* safety rules;
+* response schema;
+* analytics de preguntas no respondidas.
+
+## Phase 5: Editorial Operations
+
+* admin CMS;
+* import/validation workflow;
+* Stream Plan publishing;
+* decision queue;
+* source registry;
+* audit logs;
+* QA dashboard.
+
+---
+
+# 21. Entregables requeridos
+
+Al terminar, entrega:
+
+1. Código funcional.
+2. Migraciones.
+3. Seeders o importers.
+4. API endpoints documentados.
+5. Componentes reutilizables.
+6. Sistema de temas.
+7. Pantallas implementadas.
+8. Tests unitarios.
+9. Tests de integración.
+10. Validadores editoriales.
+11. Documento de arquitectura actualizado.
+12. Lista de supuestos.
+13. Lista de decisiones que requieren revisión humana.
+14. Lista de funcionalidades terminadas, parcialmente terminadas y bloqueadas.
+15. Capturas o preview de las pantallas finales.
+16. Un archivo:
+
+```text
+docs/BIBLE_JOURNEY_IMPLEMENTATION_STATUS.md
+```
+
+Con:
+
+```text
+Completed
+In Progress
+Blocked
+Needs Editorial Review
+Needs Licensing Review
+```
+
+---
+
+# 22. Restricciones finales
+
+No hagas esto:
+
+* no conviertas todo en cards;
+* no borres el lector continuo;
+* no uses un chat como pantalla de estudio;
+* no pongas cinco tabs inferiores;
+* no cuentes texto no leído como leído;
+* no mezcles relatos paralelos;
+* no inventes cronologías;
+* no escondas incertidumbre;
+* no trates Apocalipsis como cronología mundial por defecto;
+* no muestres NVI, NIV o RVR60 completos sin licencia;
+* no conviertas Ezra en un predicador automático;
+* no bloquees toda la app si una traducción está en Reference Mode;
+* no reemplaces las pantallas actuales sin migrar flujos útiles;
+* no dejes datos importantes hardcodeados en widgets.
+
+Haz esto:
+
+* prioriza la lectura;
+* conserva Escritura intacta;
+* separa lectura, estudio, Journey y Ezra;
+* registra fuentes;
+* registra certeza;
+* registra decisiones;
+* aplica perfiles;
+* calcula progreso con honestidad;
+* mantén una experiencia hermosa y simple para el lector.
+
+No necesito una propuesta abstracta. Ejecuta la implementación, documenta decisiones y deja el proyecto en un estado que pueda continuar un equipo real de producto, editorial, backend y mobile.
