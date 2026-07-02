@@ -216,14 +216,6 @@ class _ResumenTab extends StatelessWidget {
                 height: 1.6,
               ),
             )
-          else if (node.crs.editorialNote != null)
-            Text(
-              node.crs.editorialNote!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: textColor,
-                height: 1.6,
-              ),
-            )
           else
             _PlaceholderText(
               '${node.crs.titleEs} — ${node.crs.era}',

@@ -75,7 +75,11 @@ class BuildCrsStudyContent extends Command
 
         $referenceText = empty($references) ? 'sin bloque de lectura directo' : implode('; ', $references);
         $era = $crs->user_facing_era ?: $crs->era;
-        $summary = $crs->editorial_note ?: "{$crs->title_es} reune {$referenceText} dentro de la secuencia cronologica.";
+        // editorial_note is an internal English methodology/placement note for
+        // editors (authorship debates, "V0.1" versioning caveats, etc.), never
+        // reader-facing copy — do not surface it as the summary even as a
+        // fallback, regardless of language.
+        $summary = "{$crs->title_es} reune {$referenceText} dentro de la secuencia cronologica.";
         $context = $crs->narrative_flow_message_es
             ?: "Este bloque pertenece a {$era}. Su lugar editorial se basa en la referencia {$crs->source_map} y en una confianza de ubicacion marcada como {$crs->placement_confidence}.";
 

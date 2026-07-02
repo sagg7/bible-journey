@@ -567,10 +567,10 @@ class _DeepeningSection extends StatelessWidget {
           BjSectionLabel(s.t('modoDeEstudio')),
           const SizedBox(height: 16),
 
-          // Preview of editorial note
-          if (node.crs.editorialNote != null) ...[
+          // Preview of the study content summary
+          if (node.studyContent.summaryEs != null) ...[
             Text(
-              node.crs.editorialNote!,
+              node.studyContent.summaryEs!,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(
