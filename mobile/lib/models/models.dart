@@ -236,6 +236,7 @@ class CrsNodeDetail {
   final List<ReadingBlockV2> blocks;
   final CompareGroupRef? compareGroup;
   final StudyContent studyContent;
+  final SpiritOfProphecyContent spiritOfProphecy;
 
   CrsNodeDetail({
     required this.nodeId,
@@ -247,6 +248,7 @@ class CrsNodeDetail {
     required this.blocks,
     this.compareGroup,
     required this.studyContent,
+    required this.spiritOfProphecy,
   });
 
   factory CrsNodeDetail.fromJson(Map<String, dynamic> j) => CrsNodeDetail(
@@ -263,7 +265,63 @@ class CrsNodeDetail {
         ? CompareGroupRef.fromJson(j['compare_group'])
         : null,
     studyContent: StudyContent.fromJson(j['study_content'] ?? {}),
+    spiritOfProphecy: SpiritOfProphecyContent.fromJson(
+      j['spirit_of_prophecy'] ?? {},
+    ),
   );
+}
+
+class SpiritOfProphecyContent {
+  final String? locale;
+  final String? sourceBookCode;
+  final String? sourceBookTitle;
+  final List<SpiritOfProphecyExcerpt> excerpts;
+  final String? copyright;
+  final String? version;
+
+  SpiritOfProphecyContent({
+    this.locale,
+    this.sourceBookCode,
+    this.sourceBookTitle,
+    this.excerpts = const [],
+    this.copyright,
+    this.version,
+  });
+
+  factory SpiritOfProphecyContent.fromJson(Map<String, dynamic> j) =>
+      SpiritOfProphecyContent(
+        locale: j['locale'],
+        sourceBookCode: j['source_book_code'],
+        sourceBookTitle: j['source_book_title'],
+        excerpts: ((j['excerpts'] as List?) ?? [])
+            .map(
+              (e) => SpiritOfProphecyExcerpt.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
+            .toList(),
+        copyright: j['copyright'],
+        version: j['version'],
+      );
+}
+
+class SpiritOfProphecyExcerpt {
+  final String snippet;
+  final String refcodeShort;
+  final String refcodeLong;
+
+  SpiritOfProphecyExcerpt({
+    required this.snippet,
+    required this.refcodeShort,
+    required this.refcodeLong,
+  });
+
+  factory SpiritOfProphecyExcerpt.fromJson(Map<String, dynamic> j) =>
+      SpiritOfProphecyExcerpt(
+        snippet: j['snippet'] ?? '',
+        refcodeShort: j['refcode_short'] ?? '',
+        refcodeLong: j['refcode_long'] ?? '',
+      );
 }
 
 class StudyContent {

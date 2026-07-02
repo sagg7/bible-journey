@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'egw' => [
+        'client_id' => env('EGW_CLIENT_ID'),
+        'client_secret' => env('EGW_CLIENT_SECRET'),
+        'token_url' => 'https://cpanel.egwwritings.org/connect/token',
+        'api_base' => 'https://a.egwwritings.org',
+    ],
+
 ];

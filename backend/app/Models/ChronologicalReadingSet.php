@@ -43,6 +43,11 @@ class ChronologicalReadingSet extends Model
         return $this->hasOne(CrsStudyContent::class, 'crs_id');
     }
 
+    public function spiritOfProphecyContents(): HasMany
+    {
+        return $this->hasMany(CrsSpiritOfProphecyContent::class, 'crs_id');
+    }
+
     public function narrativeAnchor(): ?ReadingBlock
     {
         return $this->blocks()->where('role', 'narrative_anchor')->first();

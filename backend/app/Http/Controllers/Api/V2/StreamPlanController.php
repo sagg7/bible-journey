@@ -73,6 +73,7 @@ class StreamPlanController extends Controller
                 'crs:id,source_map,era,era_slug,sort_key,title_es,title_en,placement_confidence,event_confidence,narrative_flow_message_es,editorial_note',
                 'crs.blocks',
                 'crs.studyContent',
+                'crs.spiritOfProphecyContents',
                 'compareGroup',
             ])
             ->firstOrFail();
@@ -120,6 +121,7 @@ class StreamPlanController extends Controller
                 'relation_level'       => $node->compareGroup->relation_level,
             ] : null,
             'study_content'      => $this->formatStudyContent($crs),
+            'spirit_of_prophecy' => $this->formatSpiritOfProphecy($crs, $request->query('locale', 'es')),
             'outbound_edges'     => $outEdges,
         ]);
     }
@@ -210,6 +212,21 @@ class StreamPlanController extends Controller
             'connections' => $content?->connections ?? [],
             'sources'     => $content?->sources ?? [],
             'version'     => $content?->content_version,
+        ];
+    }
+
+    private function formatSpiritOfProphecy($crs, string $locale): array
+    {
+        $content = $crs->spiritOfProphecyContents->firstWhere('locale', $locale)
+            ?? $crs->spiritOfProphecyContents->first();
+
+        return [
+            'locale'            => $content?->locale,
+            'source_book_code'  => $content?->source_book_code,
+            'source_book_title' => $content?->source_book_title,
+            'excerpts'          => $content?->excerpts ?? [],
+            'copyright'         => '© Ellen G. White Estate',
+            'version'           => $content?->content_version,
         ];
     }
 }
