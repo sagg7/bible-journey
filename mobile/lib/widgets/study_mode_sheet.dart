@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +24,13 @@ class StudyModeSheet extends ConsumerStatefulWidget {
 class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
-  static const _labels = ['Resumen', 'Contexto', 'Personas', 'Conexiones', 'Notas'];
+  static const _labels = [
+    'Resumen',
+    'Contexto',
+    'Personas',
+    'Conexiones',
+    'Notas',
+  ];
 
   @override
   void initState() {
@@ -41,7 +49,9 @@ class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? BjColors.surfaceRaised : Colors.white;
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
     final s = AppStrings(ref.watch(localeProvider));
     final screenH = MediaQuery.of(context).size.height;
 
@@ -94,7 +104,10 @@ class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: textColor.withValues(alpha: 0.5)),
+                  icon: Icon(
+                    Icons.close,
+                    color: textColor.withValues(alpha: 0.5),
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -110,7 +123,10 @@ class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
             unselectedLabelColor: textColor.withValues(alpha: 0.5),
             indicatorColor: BjColors.accentPrimary,
             dividerColor: textColor.withValues(alpha: 0.1),
-            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
             tabs: _labels.map((l) => Tab(text: l)).toList(),
           ),
 
@@ -131,18 +147,14 @@ class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
                   s: s,
                   isDark: isDark,
                 ),
-                _PersonasTab(s: s, isDark: isDark),
+                _PersonasDataTab(node: widget.node, s: s, isDark: isDark),
                 _ConexionesTab(
                   node: widget.node,
                   planId: widget.planId,
                   s: s,
                   isDark: isDark,
                 ),
-                _NotasTab(
-                  nodeId: widget.node.nodeId,
-                  s: s,
-                  isDark: isDark,
-                ),
+                _NotasTab(nodeId: widget.node.nodeId, s: s, isDark: isDark),
               ],
             ),
           ),
@@ -184,7 +196,9 @@ class _ResumenTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -194,7 +208,15 @@ class _ResumenTab extends StatelessWidget {
           // "Qué sucedió" section
           BjSectionLabel(s.t('queSucedio')),
           const SizedBox(height: 10),
-          if (node.crs.editorialNote != null)
+          if (node.studyContent.summaryEs != null)
+            Text(
+              node.studyContent.summaryEs!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: textColor,
+                height: 1.6,
+              ),
+            )
+          else if (node.crs.editorialNote != null)
             Text(
               node.crs.editorialNote!,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -214,7 +236,15 @@ class _ResumenTab extends StatelessWidget {
           // "Por qué importa en la historia" section
           BjSectionLabel(s.t('porQueImportaEnLaHistoria')),
           const SizedBox(height: 10),
-          if (node.crs.narrativeFlowMessage != null)
+          if (node.studyContent.contextEs != null)
+            Text(
+              node.studyContent.contextEs!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: textColor,
+                height: 1.6,
+              ),
+            )
+          else if (node.crs.narrativeFlowMessage != null)
             Text(
               node.crs.narrativeFlowMessage!,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -288,7 +318,9 @@ class _ContextoTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -332,12 +364,34 @@ class _ContextoTab extends ConsumerWidget {
           BjSectionLabel('FUENTE BÍBLICA'),
           const SizedBox(height: 8),
           Text(
-            node.crs.sourceMap,
+            node.studyContent.sources.isNotEmpty
+                ? node.studyContent.sources
+                      .map((source) => source.label)
+                      .join('; ')
+                : node.crs.sourceMap,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: textColor,
               height: 1.5,
             ),
           ),
+
+          if (node.studyContent.places.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            BjSectionLabel(s.t('lugar').toUpperCase()),
+            const SizedBox(height: 10),
+            ...node.studyContent.places.map(
+              (place) => _StudyInfoCard(
+                icon: Icons.place_outlined,
+                title: place.name,
+                subtitle: place.note,
+                trailing: place.certaintyLevel,
+                color: BjColors.accentBronze,
+                textColor: textColor,
+                isDark: isDark,
+                theme: theme,
+              ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 
@@ -429,7 +483,9 @@ class _PersonasTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
 
     return Center(
       child: Padding(
@@ -444,8 +500,11 @@ class _PersonasTab extends StatelessWidget {
                 color: BjColors.accentPrimary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.people_outline,
-                  size: 32, color: BjColors.accentPrimary),
+              child: Icon(
+                Icons.people_outline,
+                size: 32,
+                color: BjColors.accentPrimary,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -473,6 +532,64 @@ class _PersonasTab extends StatelessWidget {
 
 // ─── Tab 4: Conexiones ────────────────────────────────────────────────────────
 
+class _PersonasDataTab extends StatelessWidget {
+  final CrsNodeDetail node;
+  final AppStrings s;
+  final bool isDark;
+
+  const _PersonasDataTab({
+    required this.node,
+    required this.s,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
+
+    if (node.studyContent.people.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            'No hay personas destacadas registradas para este bloque.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: textColor.withValues(alpha: 0.6),
+              height: 1.5,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          BjSectionLabel(s.t('personas').toUpperCase()),
+          const SizedBox(height: 12),
+          ...node.studyContent.people.map(
+            (person) => _StudyInfoCard(
+              icon: Icons.person_outline,
+              title: person.name,
+              subtitle: person.role,
+              color: BjColors.accentPrimary,
+              textColor: textColor,
+              isDark: isDark,
+              theme: theme,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ConexionesTab extends StatelessWidget {
   final CrsNodeDetail node;
   final int planId;
@@ -489,8 +606,12 @@ class _ConexionesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
-    final related = node.blocks.where((b) => b.role != 'narrative_anchor').toList();
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
+    final related = node.blocks
+        .where((b) => b.role != 'narrative_anchor')
+        .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -519,32 +640,59 @@ class _ConexionesTab extends StatelessWidget {
           if (related.isNotEmpty) ...[
             BjSectionLabel('LECTURAS RELACIONADAS'),
             const SizedBox(height: 10),
-            ...related.map((b) => _RelatedConnectionRow(
-                  block: b,
-                  textColor: textColor,
-                  isDark: isDark,
-                  theme: theme,
-                )),
+            ...related.map(
+              (b) => _RelatedConnectionRow(
+                block: b,
+                textColor: textColor,
+                isDark: isDark,
+                theme: theme,
+              ),
+            ),
             const SizedBox(height: 20),
           ],
 
-          // Placeholder for future graph connections
-          BjSectionLabel('CONEXIONES EN EL PLAN'),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark ? BjColors.surfaceCard : const Color(0xFFF0EDE8),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              'El grafo de conexiones entre eventos del plan estará disponible próximamente.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: textColor.withValues(alpha: 0.6),
-                height: 1.5,
+          if (node.studyContent.connections.isNotEmpty) ...[
+            BjSectionLabel('CONEXIONES EN EL PLAN'),
+            const SizedBox(height: 10),
+            ...node.studyContent.connections.map(
+              (connection) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _ConnectionCard(
+                  icon: Icons.link,
+                  title: connection.title,
+                  subtitle:
+                      connection.subtitle ??
+                      connection.sourceMap ??
+                      connection.type,
+                  color: BjColors.certaintyHigh,
+                  onTap: connection.compareGroupId != null
+                      ? () => context.push(
+                          '/compare/${connection.compareGroupId}',
+                        )
+                      : () {},
+                  isDark: isDark,
+                  theme: theme,
+                ),
               ),
             ),
-          ),
+          ] else ...[
+            BjSectionLabel('CONEXIONES EN EL PLAN'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isDark ? BjColors.surfaceCard : const Color(0xFFF0EDE8),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'No hay conexiones registradas para este bloque.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: textColor.withValues(alpha: 0.6),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -558,7 +706,11 @@ class _NotasTab extends ConsumerStatefulWidget {
   final AppStrings s;
   final bool isDark;
 
-  const _NotasTab({required this.nodeId, required this.s, required this.isDark});
+  const _NotasTab({
+    required this.nodeId,
+    required this.s,
+    required this.isDark,
+  });
 
   @override
   ConsumerState<_NotasTab> createState() => _NotasTabState();
@@ -595,7 +747,10 @@ class _NotasTabState extends ConsumerState<_NotasTab> {
     if (mounted) {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nota guardada'), duration: Duration(seconds: 2)),
+        const SnackBar(
+          content: Text('Nota guardada'),
+          duration: Duration(seconds: 2),
+        ),
       );
     }
   }
@@ -609,7 +764,9 @@ class _NotasTabState extends ConsumerState<_NotasTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = widget.isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = widget.isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -641,15 +798,22 @@ class _NotasTabState extends ConsumerState<_NotasTab> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: textColor.withValues(alpha: 0.15)),
+                  borderSide: BorderSide(
+                    color: textColor.withValues(alpha: 0.15),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: textColor.withValues(alpha: 0.15)),
+                  borderSide: BorderSide(
+                    color: textColor.withValues(alpha: 0.15),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: BjColors.accentPrimary, width: 1.5),
+                  borderSide: BorderSide(
+                    color: BjColors.accentPrimary,
+                    width: 1.5,
+                  ),
                 ),
                 contentPadding: const EdgeInsets.all(14),
                 filled: true,
@@ -669,7 +833,9 @@ class _NotasTabState extends ConsumerState<_NotasTab> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.save_outlined, size: 18),
               label: const Text('Guardar nota'),
@@ -737,11 +903,17 @@ class _PlaceholderText extends StatelessWidget {
   final bool isDark;
   final ThemeData theme;
 
-  const _PlaceholderText(this.text, {required this.isDark, required this.theme});
+  const _PlaceholderText(
+    this.text, {
+    required this.isDark,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
     return Text(
       text,
       style: theme.textTheme.bodyMedium?.copyWith(
@@ -794,6 +966,84 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
+class _StudyInfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final String? trailing;
+  final Color color;
+  final Color textColor;
+  final bool isDark;
+  final ThemeData theme;
+
+  const _StudyInfoCard({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    required this.color,
+    required this.textColor,
+    required this.isDark,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? BjColors.surfaceCard : const Color(0xFFF0EDE8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (subtitle != null && subtitle!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      subtitle!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: textColor.withValues(alpha: 0.65),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (trailing != null && trailing!.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            CertaintyBadge(label: trailing!, compact: true),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _ConnectionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -815,7 +1065,9 @@ class _ConnectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
     final cardColor = isDark ? BjColors.surfaceCard : const Color(0xFFF0EDE8);
 
     return InkWell(

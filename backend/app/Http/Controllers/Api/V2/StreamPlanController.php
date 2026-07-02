@@ -72,6 +72,7 @@ class StreamPlanController extends Controller
             ->with([
                 'crs:id,source_map,era,era_slug,sort_key,title_es,title_en,placement_confidence,event_confidence,narrative_flow_message_es,editorial_note',
                 'crs.blocks',
+                'crs.studyContent',
                 'compareGroup',
             ])
             ->firstOrFail();
@@ -118,6 +119,7 @@ class StreamPlanController extends Controller
                 'title_es'             => $node->compareGroup->title_es,
                 'relation_level'       => $node->compareGroup->relation_level,
             ] : null,
+            'study_content'      => $this->formatStudyContent($crs),
             'outbound_edges'     => $outEdges,
         ]);
     }
@@ -193,6 +195,21 @@ class StreamPlanController extends Controller
             'user_facing_era'      => $node->user_facing_era,
             'user_facing_era_sort' => $node->user_facing_era_sort,
             'is_main_stream_node'  => $node->is_main_stream_node,
+        ];
+    }
+
+    private function formatStudyContent($crs): array
+    {
+        $content = $crs->studyContent;
+
+        return [
+            'summary_es'  => $content?->summary_es,
+            'context_es'  => $content?->context_es,
+            'people'      => $content?->people ?? [],
+            'places'      => $content?->places ?? [],
+            'connections' => $content?->connections ?? [],
+            'sources'     => $content?->sources ?? [],
+            'version'     => $content?->content_version,
         ];
     }
 }

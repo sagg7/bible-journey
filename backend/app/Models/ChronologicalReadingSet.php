@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ChronologicalReadingSet extends Model
 {
@@ -35,6 +36,11 @@ class ChronologicalReadingSet extends Model
     public function historicalEvent(): BelongsTo
     {
         return $this->belongsTo(HistoricalEvent::class);
+    }
+
+    public function studyContent(): HasOne
+    {
+        return $this->hasOne(CrsStudyContent::class, 'crs_id');
     }
 
     public function narrativeAnchor(): ?ReadingBlock

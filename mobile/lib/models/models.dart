@@ -23,7 +23,8 @@ class StreamPlanSummary {
     this.nodes = const [],
   });
 
-  factory StreamPlanSummary.fromJson(Map<String, dynamic> j) => StreamPlanSummary(
+  factory StreamPlanSummary.fromJson(Map<String, dynamic> j) =>
+      StreamPlanSummary(
         id: j['id'] ?? 0,
         profileId: j['profile_id'] ?? '',
         locale: j['locale'] ?? 'es',
@@ -31,7 +32,9 @@ class StreamPlanSummary {
         nodeCount: j['node_count'] ?? 0,
         edgeCount: j['edge_count'] ?? 0,
         publishedAt: j['published_at'],
-        nodes: ((j['nodes'] as List?) ?? []).map((n) => CrsNodeItem.fromJson(n)).toList(),
+        nodes: ((j['nodes'] as List?) ?? [])
+            .map((n) => CrsNodeItem.fromJson(n))
+            .toList(),
       );
 }
 
@@ -73,22 +76,22 @@ class CrsNodeItem {
   String get displayTitle => titleEs ?? reference ?? sourceMap ?? '';
 
   factory CrsNodeItem.fromJson(Map<String, dynamic> j) => CrsNodeItem(
-        id: j['id'] ?? 0,
-        rank: j['rank'] ?? 0,
-        displayMode: j['display_mode'] ?? 'full',
-        crsId: j['crs_id'] ?? 0,
-        sourceMap: j['source_map'],
-        titleEs: j['title_es'],
-        reference: j['reference'],
-        era: j['era'],
-        eraSlug: j['era_slug'],
-        sortKey: j['sort_key'],
-        confidence: j['confidence'],
-        streamRole: j['stream_role'],
-        userFacingEra: j['user_facing_era'],
-        userFacingEraSort: j['user_facing_era_sort'],
-        isMainStreamNode: j['is_main_stream_node'] ?? true,
-      );
+    id: j['id'] ?? 0,
+    rank: j['rank'] ?? 0,
+    displayMode: j['display_mode'] ?? 'full',
+    crsId: j['crs_id'] ?? 0,
+    sourceMap: j['source_map'],
+    titleEs: j['title_es'],
+    reference: j['reference'],
+    era: j['era'],
+    eraSlug: j['era_slug'],
+    sortKey: j['sort_key'],
+    confidence: j['confidence'],
+    streamRole: j['stream_role'],
+    userFacingEra: j['user_facing_era'],
+    userFacingEraSort: j['user_facing_era_sort'],
+    isMainStreamNode: j['is_main_stream_node'] ?? true,
+  );
 }
 
 class PassageText {
@@ -109,15 +112,15 @@ class PassageText {
   });
 
   factory PassageText.fromJson(Map<String, dynamic> j) => PassageText(
-        hasText: j['has_text'] == true,
-        reference: j['reference'] ?? '',
-        book: j['book'],
-        translation: j['translation'],
-        translationName: j['translation_name'],
-        verses: ((j['verses'] as List?) ?? [])
-            .map((v) => Map<String, dynamic>.from(v as Map))
-            .toList(),
-      );
+    hasText: j['has_text'] == true,
+    reference: j['reference'] ?? '',
+    book: j['book'],
+    translation: j['translation'],
+    translationName: j['translation_name'],
+    verses: ((j['verses'] as List?) ?? [])
+        .map((v) => Map<String, dynamic>.from(v as Map))
+        .toList(),
+  );
 }
 
 class CompareGroupDetail {
@@ -139,13 +142,15 @@ class CompareGroupDetail {
     required this.accounts,
   });
 
-  factory CompareGroupDetail.fromJson(Map<String, dynamic> j) => CompareGroupDetail(
+  factory CompareGroupDetail.fromJson(Map<String, dynamic> j) =>
+      CompareGroupDetail(
         id: j['id'] ?? 0,
         titleEs: j['title_es'] ?? '',
         editorialSummaryEs: j['editorial_summary_es'],
         disclaimerEs: j['disclaimer_es'],
         relationLevel: j['relation_level'],
-        keyDifferencesEs: ((j['key_differences_es'] as List?) ?? []).cast<String>(),
+        keyDifferencesEs: ((j['key_differences_es'] as List?) ?? [])
+            .cast<String>(),
         accounts: ((j['accounts'] as List?) ?? [])
             .map((a) => CompareAccount.fromJson(a))
             .toList(),
@@ -172,14 +177,14 @@ class CompareAccount {
   });
 
   factory CompareAccount.fromJson(Map<String, dynamic> j) => CompareAccount(
-        id: j['id'] ?? 0,
-        sourceMap: j['source_map'] ?? '',
-        role: j['role'] ?? 'narrative_anchor',
-        displayReference: j['display_reference'] ?? '',
-        displayLabelEs: j['display_label_es'],
-        confidence: j['confidence'] ?? 'probable',
-        hasText: j['has_text'] == true,
-      );
+    id: j['id'] ?? 0,
+    sourceMap: j['source_map'] ?? '',
+    role: j['role'] ?? 'narrative_anchor',
+    displayReference: j['display_reference'] ?? '',
+    displayLabelEs: j['display_label_es'],
+    confidence: j['confidence'] ?? 'probable',
+    hasText: j['has_text'] == true,
+  );
 }
 
 class ReadingBlockV2 {
@@ -208,17 +213,17 @@ class ReadingBlockV2 {
   });
 
   factory ReadingBlockV2.fromJson(Map<String, dynamic> j) => ReadingBlockV2(
-        id: j['id'] ?? 0,
-        sourceMap: j['source_map'] ?? '',
-        role: j['role'] ?? 'narrative_anchor',
-        displayOrder: j['display_order'] ?? 0,
-        displayReference: j['display_reference'] ?? '',
-        displayLabelEs: j['display_label_es'],
-        placementConfidence: j['placement_confidence'] ?? 'probable',
-        requiredInCompleteMode: j['required_in_complete_mode'] ?? true,
-        shownInNarrativeFlow: j['shown_in_narrative_flow'] ?? true,
-        hasText: j['has_text'] ?? false,
-      );
+    id: j['id'] ?? 0,
+    sourceMap: j['source_map'] ?? '',
+    role: j['role'] ?? 'narrative_anchor',
+    displayOrder: j['display_order'] ?? 0,
+    displayReference: j['display_reference'] ?? '',
+    displayLabelEs: j['display_label_es'],
+    placementConfidence: j['placement_confidence'] ?? 'probable',
+    requiredInCompleteMode: j['required_in_complete_mode'] ?? true,
+    shownInNarrativeFlow: j['shown_in_narrative_flow'] ?? true,
+    hasText: j['has_text'] ?? false,
+  );
 }
 
 class CrsNodeDetail {
@@ -230,6 +235,7 @@ class CrsNodeDetail {
   final CrsMeta crs;
   final List<ReadingBlockV2> blocks;
   final CompareGroupRef? compareGroup;
+  final StudyContent studyContent;
 
   CrsNodeDetail({
     required this.nodeId,
@@ -240,18 +246,124 @@ class CrsNodeDetail {
     required this.crs,
     required this.blocks,
     this.compareGroup,
+    required this.studyContent,
   });
 
   factory CrsNodeDetail.fromJson(Map<String, dynamic> j) => CrsNodeDetail(
-        nodeId: j['node_id'] ?? 0,
-        rank: j['rank'] ?? 0,
-        displayMode: j['display_mode'] ?? 'full',
-        requiredState: j['required_state'],
-        explanationEs: j['explanation_es'],
-        crs: CrsMeta.fromJson(j['crs'] ?? {}),
-        blocks: ((j['blocks'] as List?) ?? []).map((b) => ReadingBlockV2.fromJson(b)).toList(),
-        compareGroup: j['compare_group'] != null ? CompareGroupRef.fromJson(j['compare_group']) : null,
-      );
+    nodeId: j['node_id'] ?? 0,
+    rank: j['rank'] ?? 0,
+    displayMode: j['display_mode'] ?? 'full',
+    requiredState: j['required_state'],
+    explanationEs: j['explanation_es'],
+    crs: CrsMeta.fromJson(j['crs'] ?? {}),
+    blocks: ((j['blocks'] as List?) ?? [])
+        .map((b) => ReadingBlockV2.fromJson(b))
+        .toList(),
+    compareGroup: j['compare_group'] != null
+        ? CompareGroupRef.fromJson(j['compare_group'])
+        : null,
+    studyContent: StudyContent.fromJson(j['study_content'] ?? {}),
+  );
+}
+
+class StudyContent {
+  final String? summaryEs;
+  final String? contextEs;
+  final List<StudyPerson> people;
+  final List<StudyPlace> places;
+  final List<StudyConnection> connections;
+  final List<StudySource> sources;
+  final String? version;
+
+  StudyContent({
+    this.summaryEs,
+    this.contextEs,
+    this.people = const [],
+    this.places = const [],
+    this.connections = const [],
+    this.sources = const [],
+    this.version,
+  });
+
+  factory StudyContent.fromJson(Map<String, dynamic> j) => StudyContent(
+    summaryEs: j['summary_es'],
+    contextEs: j['context_es'],
+    people: ((j['people'] as List?) ?? [])
+        .map((p) => StudyPerson.fromJson(Map<String, dynamic>.from(p as Map)))
+        .toList(),
+    places: ((j['places'] as List?) ?? [])
+        .map((p) => StudyPlace.fromJson(Map<String, dynamic>.from(p as Map)))
+        .toList(),
+    connections: ((j['connections'] as List?) ?? [])
+        .map(
+          (c) => StudyConnection.fromJson(Map<String, dynamic>.from(c as Map)),
+        )
+        .toList(),
+    sources: ((j['sources'] as List?) ?? [])
+        .map((s) => StudySource.fromJson(Map<String, dynamic>.from(s as Map)))
+        .toList(),
+    version: j['version'],
+  );
+}
+
+class StudyPerson {
+  final String name;
+  final String? role;
+
+  StudyPerson({required this.name, this.role});
+
+  factory StudyPerson.fromJson(Map<String, dynamic> j) =>
+      StudyPerson(name: j['name'] ?? '', role: j['role']);
+}
+
+class StudyPlace {
+  final String name;
+  final String? certaintyLevel;
+  final String? note;
+
+  StudyPlace({required this.name, this.certaintyLevel, this.note});
+
+  factory StudyPlace.fromJson(Map<String, dynamic> j) => StudyPlace(
+    name: j['name'] ?? '',
+    certaintyLevel: j['certainty_level'],
+    note: j['note'],
+  );
+}
+
+class StudyConnection {
+  final String type;
+  final String title;
+  final String? subtitle;
+  final String? sourceMap;
+  final String? confidence;
+  final int? compareGroupId;
+
+  StudyConnection({
+    required this.type,
+    required this.title,
+    this.subtitle,
+    this.sourceMap,
+    this.confidence,
+    this.compareGroupId,
+  });
+
+  factory StudyConnection.fromJson(Map<String, dynamic> j) => StudyConnection(
+    type: j['type'] ?? '',
+    title: j['title'] ?? '',
+    subtitle: j['subtitle'],
+    sourceMap: j['source_map'],
+    confidence: j['confidence'],
+    compareGroupId: j['compare_group_id'],
+  );
+}
+
+class StudySource {
+  final String label;
+
+  StudySource({required this.label});
+
+  factory StudySource.fromJson(Map<String, dynamic> j) =>
+      StudySource(label: j['label'] ?? '');
 }
 
 class CrsMeta {
@@ -280,17 +392,17 @@ class CrsMeta {
   });
 
   factory CrsMeta.fromJson(Map<String, dynamic> j) => CrsMeta(
-        id: j['id'] ?? 0,
-        sourceMap: j['source_map'] ?? '',
-        era: j['era'] ?? '',
-        eraSlug: j['era_slug'] ?? '',
-        titleEs: j['title_es'] ?? '',
-        titleEn: j['title_en'],
-        placementConfidence: j['placement_confidence'] ?? 'probable',
-        eventConfidence: j['event_confidence'] ?? 'probable',
-        narrativeFlowMessage: j['narrative_flow_message'],
-        editorialNote: j['editorial_note'],
-      );
+    id: j['id'] ?? 0,
+    sourceMap: j['source_map'] ?? '',
+    era: j['era'] ?? '',
+    eraSlug: j['era_slug'] ?? '',
+    titleEs: j['title_es'] ?? '',
+    titleEn: j['title_en'],
+    placementConfidence: j['placement_confidence'] ?? 'probable',
+    eventConfidence: j['event_confidence'] ?? 'probable',
+    narrativeFlowMessage: j['narrative_flow_message'],
+    editorialNote: j['editorial_note'],
+  );
 }
 
 class CompareGroupRef {
@@ -298,13 +410,17 @@ class CompareGroupRef {
   final String titleEs;
   final String? relationLevel;
 
-  CompareGroupRef({required this.id, required this.titleEs, this.relationLevel});
+  CompareGroupRef({
+    required this.id,
+    required this.titleEs,
+    this.relationLevel,
+  });
 
   factory CompareGroupRef.fromJson(Map<String, dynamic> j) => CompareGroupRef(
-        id: j['id'] ?? 0,
-        titleEs: j['title_es'] ?? '',
-        relationLevel: j['relation_level'],
-      );
+    id: j['id'] ?? 0,
+    titleEs: j['title_es'] ?? '',
+    relationLevel: j['relation_level'],
+  );
 }
 
 class ProgressSummary {
@@ -312,13 +428,17 @@ class ProgressSummary {
   final CanonicalProgress canonical;
   final NarrativeProgress narrative;
 
-  ProgressSummary({required this.planId, required this.canonical, required this.narrative});
+  ProgressSummary({
+    required this.planId,
+    required this.canonical,
+    required this.narrative,
+  });
 
   factory ProgressSummary.fromJson(Map<String, dynamic> j) => ProgressSummary(
-        planId: j['plan_id'] ?? 0,
-        canonical: CanonicalProgress.fromJson(j['canonical'] ?? {}),
-        narrative: NarrativeProgress.fromJson(j['narrative'] ?? {}),
-      );
+    planId: j['plan_id'] ?? 0,
+    canonical: CanonicalProgress.fromJson(j['canonical'] ?? {}),
+    narrative: NarrativeProgress.fromJson(j['narrative'] ?? {}),
+  );
 }
 
 class CanonicalProgress {
@@ -336,7 +456,8 @@ class CanonicalProgress {
     required this.percent,
   });
 
-  factory CanonicalProgress.fromJson(Map<String, dynamic> j) => CanonicalProgress(
+  factory CanonicalProgress.fromJson(Map<String, dynamic> j) =>
+      CanonicalProgress(
         total: j['total'] ?? 0,
         completed: j['completed'] ?? 0,
         inProgress: j['in_progress'] ?? 0,
@@ -362,7 +483,8 @@ class NarrativeProgress {
     required this.percent,
   });
 
-  factory NarrativeProgress.fromJson(Map<String, dynamic> j) => NarrativeProgress(
+  factory NarrativeProgress.fromJson(Map<String, dynamic> j) =>
+      NarrativeProgress(
         total: j['total'] ?? 0,
         notStarted: j['not_started'] ?? 0,
         inProgress: j['in_progress'] ?? 0,
@@ -393,7 +515,8 @@ class EzraStructuredResponse {
     this.reflectionQuestion,
   });
 
-  factory EzraStructuredResponse.fromJson(Map<String, dynamic> j) => EzraStructuredResponse(
+  factory EzraStructuredResponse.fromJson(Map<String, dynamic> j) =>
+      EzraStructuredResponse(
         directAnswer: j['direct_answer'] ?? j['answer'] ?? '',
         biblicalBasis: j['biblical_basis'],
         historicalContext: j['historical_context'],
@@ -418,7 +541,8 @@ class BibleTranslationOption {
     required this.canDisplayFullText,
   });
 
-  factory BibleTranslationOption.fromJson(Map<String, dynamic> j) => BibleTranslationOption(
+  factory BibleTranslationOption.fromJson(Map<String, dynamic> j) =>
+      BibleTranslationOption(
         code: j['code'] ?? '',
         name: j['name'] ?? '',
         language: j['language'] ?? '',
@@ -434,14 +558,19 @@ class BibleVerseItem {
   final String text;
   final String ref;
 
-  BibleVerseItem({required this.chapter, required this.verse, required this.text, required this.ref});
+  BibleVerseItem({
+    required this.chapter,
+    required this.verse,
+    required this.text,
+    required this.ref,
+  });
 
   factory BibleVerseItem.fromJson(Map<String, dynamic> j) => BibleVerseItem(
-        chapter: j['chapter'] ?? 0,
-        verse: j['verse'] ?? j['number'] ?? 0,
-        text: j['text'] ?? '',
-        ref: j['ref'] ?? '',
-      );
+    chapter: j['chapter'] ?? 0,
+    verse: j['verse'] ?? j['number'] ?? 0,
+    text: j['text'] ?? '',
+    ref: j['ref'] ?? '',
+  );
 }
 
 class ReadingBlockDetail {
@@ -459,7 +588,8 @@ class ReadingBlockDetail {
     this.translationName,
   });
 
-  factory ReadingBlockDetail.fromJson(Map<String, dynamic> j) => ReadingBlockDetail(
+  factory ReadingBlockDetail.fromJson(Map<String, dynamic> j) =>
+      ReadingBlockDetail(
         hasText: j['has_text'] == true,
         verseCount: j['verse_count'] ?? 0,
         verses: ((j['verses'] as List?) ?? [])
@@ -508,18 +638,16 @@ class CanonicalChapterContent {
       chapter: chNum,
       verseCount: j['verse_count'] ?? 0,
       hasText: j['has_text'] == true,
-      verses: ((j['verses'] as List?) ?? [])
-          .map((v) {
-            final m = v as Map<String, dynamic>;
-            final num = m['number'] as int? ?? 0;
-            return BibleVerseItem(
-              chapter: chNum,
-              verse: num,
-              text: m['text'] ?? '',
-              ref: '$chNum:$num',
-            );
-          })
-          .toList(),
+      verses: ((j['verses'] as List?) ?? []).map((v) {
+        final m = v as Map<String, dynamic>;
+        final num = m['number'] as int? ?? 0;
+        return BibleVerseItem(
+          chapter: chNum,
+          verse: num,
+          text: m['text'] ?? '',
+          ref: '$chNum:$num',
+        );
+      }).toList(),
       translationCode: (j['translation'] as Map<String, dynamic>?)?['code'],
       translationName: (j['translation'] as Map<String, dynamic>?)?['name'],
       prevChapter: nav['prev_chapter'] as int?,

@@ -11,6 +11,17 @@ import '../models/models.dart';
 import '../widgets/narrative_flow_sheet.dart';
 import '../widgets/study_mode_sheet.dart';
 
+/// The block to render as the main scripture text. Prefers the
+/// `narrative_anchor` block; if a CRS has no anchor (it's a standalone
+/// literary/genealogical/poetic window — ~25% of CRS, e.g. all Psalms and
+/// most of 1 Chronicles), falls back to the first block so the reader still
+/// shows its text instead of an empty placeholder.
+ReadingBlockV2? primaryBlock(CrsNodeDetail node) {
+  if (node.blocks.isEmpty) return null;
+  return node.blocks.where((b) => b.role == 'narrative_anchor').firstOrNull ??
+      node.blocks.first;
+}
+
 class CrsReaderScreen extends ConsumerStatefulWidget {
   final int planId;
   final int nodeId;
@@ -55,7 +66,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
 
   Future<void> _handleContinue(
       BuildContext context, CrsNodeDetail node, AppStrings s) async {
-    final anchor = node.blocks.where((b) => b.role == 'narrative_anchor').firstOrNull;
+    final anchor = primaryBlock(node);
     if (anchor == null) return;
 
     await ref.read(localProgressProvider.notifier).markBlockCompleted(anchor.id);
@@ -70,7 +81,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
 
     if (!context.mounted) return;
 
-    final hasRelated = node.blocks.any((b) => b.role != 'narrative_anchor');
+    final hasRelated = node.blocks.any((b) => b.id != anchor.id);
     if (hasRelated) {
       final freshNode = await ref.read(apiProvider).crsNode(widget.planId, node.nodeId);
       if (!context.mounted) return;
@@ -112,8 +123,8 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
     final bg = isDark ? BjColors.surfacePrimary : BjColors.surfaceReaderLight;
     final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
 
-    final anchor = node.blocks.where((b) => b.role == 'narrative_anchor').firstOrNull;
-    final related = node.blocks.where((b) => b.role != 'narrative_anchor').toList();
+    final anchor = primaryBlock(node);
+    final related = node.blocks.where((b) => b.id != anchor?.id).toList();
 
     final neighbors = ref.watch(neighborNodesProvider((widget.planId, widget.nodeId)));
 
