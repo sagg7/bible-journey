@@ -42,4 +42,9 @@ return [
         'api_base' => 'https://a.egwwritings.org',
     ],
 
+    'youversion' => [
+        'app_key' => env('YOUVERSION_APP_KEY'),
+        'api_base' => 'https://api.youversion.com/v1',
+    ],
+
 ];
