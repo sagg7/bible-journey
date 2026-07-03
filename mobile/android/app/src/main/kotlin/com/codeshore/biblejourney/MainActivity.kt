@@ -1,4 +1,4 @@
-package com.biblejourney.bible_journey
+package com.codeshore.biblejourney
 
 import io.flutter.embedding.android.FlutterActivity
 
