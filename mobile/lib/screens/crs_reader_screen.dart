@@ -289,6 +289,23 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
             tooltip: s.t('compararRelatos'),
             onPressed: () => context.push('/compare/${node.compareGroup!.id}'),
           ),
+        TextButton.icon(
+          onPressed: () async {
+            final code = await context.push<String>('/traducciones');
+            if (code != null) {
+              ref.read(translationProvider.notifier).state = code;
+            }
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: theme.colorScheme.onSurfaceVariant,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          icon: Text(
+            ref.watch(translationProvider) ?? 'RVA1909',
+            style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          label: const Icon(Icons.expand_more, size: 16),
+        ),
         IconButton(
           icon: const Icon(Icons.auto_awesome_outlined),
           onPressed: () =>

@@ -36,6 +36,8 @@ class TranslationsScreen extends ConsumerWidget {
           ),
         ),
         data: (translations) {
+          final selectedCode = ref.watch(translationProvider) ?? 'RVA1909';
+
           // Group by language (API returns ISO codes like "es"/"en")
           const langLabels = {'es': 'Español', 'en': 'Inglés'};
           final Map<String, List<BibleTranslationOption>> byLang = {};
@@ -68,7 +70,10 @@ class TranslationsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(top: 20, bottom: 10),
                   child: BjSectionLabel(lang),
                 ),
-                ...byLang[lang]!.map((t) => _TranslationTile(translation: t)),
+                ...byLang[lang]!.map((t) => _TranslationTile(
+                      translation: t,
+                      isSelected: t.code == selectedCode,
+                    )),
               ],
             ],
           );
@@ -82,7 +87,8 @@ class TranslationsScreen extends ConsumerWidget {
 
 class _TranslationTile extends StatelessWidget {
   final dynamic translation;
-  const _TranslationTile({required this.translation});
+  final bool isSelected;
+  const _TranslationTile({required this.translation, required this.isSelected});
 
   _AvailabilityState _state() {
     final hasText = translation.canDisplayFullText == true;
@@ -93,8 +99,6 @@ class _TranslationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final state = _state();
-    final isSelected =
-        (translation.code ?? '') == 'WEB'; // placeholder until prefs
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
