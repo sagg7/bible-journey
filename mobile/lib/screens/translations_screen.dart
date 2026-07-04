@@ -36,10 +36,12 @@ class TranslationsScreen extends ConsumerWidget {
           ),
         ),
         data: (translations) {
-          // Group by language
+          // Group by language (API returns ISO codes like "es"/"en")
+          const langLabels = {'es': 'Español', 'en': 'Inglés'};
           final Map<String, List<BibleTranslationOption>> byLang = {};
           for (final t in translations) {
-            byLang.putIfAbsent(t.language, () => []).add(t);
+            final label = langLabels[t.language] ?? t.language;
+            byLang.putIfAbsent(label, () => []).add(t);
           }
 
           // Ensure Spanish and English appear first
@@ -83,12 +85,8 @@ class _TranslationTile extends StatelessWidget {
   const _TranslationTile({required this.translation});
 
   _AvailabilityState _state() {
-    final hasText = translation.hasFullText == true;
-    final license = translation.licenseStatus as String?;
-    if (hasText) return _AvailabilityState.fullText;
-    if (license == 'pending') return _AvailabilityState.pendingLicense;
-    if (license == 'provider') return _AvailabilityState.viaProvider;
-    return _AvailabilityState.referenceOnly;
+    final hasText = translation.canDisplayFullText == true;
+    return hasText ? _AvailabilityState.fullText : _AvailabilityState.referenceOnly;
   }
 
   @override

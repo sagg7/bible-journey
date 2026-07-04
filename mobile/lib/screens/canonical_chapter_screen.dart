@@ -113,13 +113,27 @@ class _CanonicalChapterScreenState
           actions: [
             if (content.translationCode != null)
               Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.only(right: 8),
                 child: Center(
-                  child: Text(
-                    content.translationCode!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: textColor.withValues(alpha: 0.5),
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final code = await context.push<String>('/traducciones');
+                      if (code != null) {
+                        ref.read(translationProvider.notifier).state = code;
+                      }
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: textColor.withValues(alpha: 0.7),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
+                    icon: Text(
+                      content.translationCode!,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: textColor.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: Icon(Icons.expand_more, size: 16, color: textColor.withValues(alpha: 0.7)),
                   ),
                 ),
               ),

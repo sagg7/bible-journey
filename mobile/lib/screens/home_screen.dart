@@ -62,6 +62,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: Image.asset(
