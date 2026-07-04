@@ -16,6 +16,7 @@ class Translation extends Model
     protected $casts = [
         'is_public_domain' => 'boolean',
         'can_display_full_text' => 'boolean',
+        'is_test_only' => 'boolean',
         'license_status' => LicenseStatus::class,
     ];
 

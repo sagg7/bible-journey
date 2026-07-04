@@ -23,9 +23,14 @@ class PassageController extends Controller
             ]);
         }
 
+        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
         $code = $request->query('translation', 'WEB');
-        $translation = Translation::where('code', $code)->first()
-            ?? Translation::where('can_display_full_text', true)->first();
+        $translation = Translation::where('code', $code)
+            ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+            ->first()
+            ?? Translation::where('can_display_full_text', true)
+                ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+                ->first();
 
         if (! $translation) {
             return response()->json([

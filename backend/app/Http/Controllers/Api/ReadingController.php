@@ -28,11 +28,15 @@ class ReadingController extends Controller
             'endBook',
         ])->findOrFail($blockId);
 
+        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
         $translationCode = $request->query('translation', 'RVA1909');
         $translation = Translation::where('code', $translationCode)
             ->where('can_display_full_text', true)
+            ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
             ->first()
-            ?? Translation::where('can_display_full_text', true)->orderBy('sort_order')->first();
+            ?? Translation::where('can_display_full_text', true)
+                ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+                ->orderBy('sort_order')->first();
 
         if (! $translation) {
             return response()->json(['error' => 'No hay traducción con texto completo disponible.'], 503);
@@ -123,11 +127,15 @@ class ReadingController extends Controller
             ->where('chapter_number', $chapterNumber)
             ->firstOrFail();
 
+        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
         $translationCode = $request->query('translation', 'RVA1909');
         $translation = Translation::where('code', $translationCode)
             ->where('can_display_full_text', true)
+            ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
             ->first()
-            ?? Translation::where('can_display_full_text', true)->orderBy('sort_order')->first();
+            ?? Translation::where('can_display_full_text', true)
+                ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+                ->orderBy('sort_order')->first();
 
         if (! $translation) {
             return response()->json(['error' => 'No hay traducción disponible.'], 503);

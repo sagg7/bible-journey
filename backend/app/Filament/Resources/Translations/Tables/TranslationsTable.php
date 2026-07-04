@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
 class TranslationsTable
@@ -22,6 +23,7 @@ class TranslationsTable
                 TextColumn::make('license_status')->label('Licencia')->badge(),
                 IconColumn::make('is_public_domain')->label('Dom. público')->boolean(),
                 IconColumn::make('can_display_full_text')->label('Texto completo')->boolean(),
+                ToggleColumn::make('is_test_only')->label('Solo pruebas'),
             ])
             ->recordActions([
                 EditAction::make(),

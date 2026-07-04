@@ -47,6 +47,14 @@ class TranslationForm
                             ->label('Mostrar texto completo')
                             ->helperText('Si está apagado, la app muestra solo la referencia.'),
                     ]),
+
+                Section::make('Acceso')
+                    ->description('Controla quién puede ver esta traducción en la app.')
+                    ->schema([
+                        Toggle::make('is_test_only')
+                            ->label('Solo para usuarios con acceso a pruebas')
+                            ->helperText('Si está activado, esta traducción queda oculta para el público y solo la ven los usuarios marcados como probadores. Apágalo para hacerla pública.'),
+                    ]),
             ]);
     }
 }
