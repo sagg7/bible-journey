@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'is_admin', 'subscription_status', 'preferred_language', 'reading_level', 'reminder_settings'])]
+#[Fillable(['name', 'email', 'password', 'is_admin', 'has_test_access', 'subscription_status', 'preferred_language', 'reading_level', 'reminder_settings'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -31,6 +31,7 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'has_test_access' => 'boolean',
             'reminder_settings' => 'array',
         ];
     }

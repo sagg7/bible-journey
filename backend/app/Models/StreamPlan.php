@@ -9,13 +9,14 @@ class StreamPlan extends Model
 {
     protected $fillable = [
         'profile_id', 'ledger_snapshot_id', 'locale',
-        'publication_status', 'validation_hash',
+        'publication_status', 'is_test_only', 'validation_hash',
         'node_count', 'edge_count',
         'compilation_warnings', 'compilation_errors',
         'published_at',
     ];
 
     protected $casts = [
+        'is_test_only'         => 'boolean',
         'compilation_warnings' => 'array',
         'compilation_errors'   => 'array',
         'published_at'         => 'datetime',
@@ -36,11 +37,12 @@ class StreamPlan extends Model
         return $this->publication_status === 'published';
     }
 
-    public static function latestPublished(string $profile = 'cautious_default', string $locale = 'es'): ?self
+    public static function latestPublished(string $profile = 'cautious_default', string $locale = 'es', bool $includeTestOnly = false): ?self
     {
         return static::where('profile_id', $profile)
             ->where('locale', $locale)
             ->where('publication_status', 'published')
+            ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
             ->latest('published_at')
             ->first();
     }

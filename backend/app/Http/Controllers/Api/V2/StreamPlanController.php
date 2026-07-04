@@ -14,14 +14,17 @@ class StreamPlanController extends Controller
     // GET /api/v2/stream-plans/{id}    →  specific plan
     public function show(Request $request, string $id): JsonResponse
     {
+        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
+
         $plan = $id === 'active'
             ? StreamPlan::latestPublished(
                 $request->query('profile', 'cautious_default'),
-                $request->query('locale', 'es')
+                $request->query('locale', 'es'),
+                $includeTestOnly
               )
             : StreamPlan::findOrFail($id);
 
-        if (! $plan) {
+        if (! $plan || ($plan->is_test_only && ! $includeTestOnly)) {
             return response()->json(['error' => 'No published plan found'], 404);
         }
 
@@ -56,14 +59,17 @@ class StreamPlanController extends Controller
     // GET /api/v2/stream-plans/{id}/nodes/{nodeId}
     public function showNode(Request $request, string $planId, string $nodeId): JsonResponse
     {
+        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
+
         $plan = $planId === 'active'
             ? StreamPlan::latestPublished(
                 $request->query('profile', 'cautious_default'),
-                $request->query('locale', 'es')
+                $request->query('locale', 'es'),
+                $includeTestOnly
               )
             : StreamPlan::findOrFail($planId);
 
-        if (! $plan) {
+        if (! $plan || ($plan->is_test_only && ! $includeTestOnly)) {
             return response()->json(['error' => 'No published plan found'], 404);
         }
 
@@ -130,14 +136,17 @@ class StreamPlanController extends Controller
     // Returns only main-stream nodes grouped by user_facing_era, ordered by rank.
     public function chronological(Request $request, string $id): JsonResponse
     {
+        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
+
         $plan = $id === 'active'
             ? StreamPlan::latestPublished(
                 $request->query('profile', 'cautious_default'),
-                $request->query('locale', 'es')
+                $request->query('locale', 'es'),
+                $includeTestOnly
               )
             : StreamPlan::findOrFail($id);
 
-        if (! $plan) {
+        if (! $plan || ($plan->is_test_only && ! $includeTestOnly)) {
             return response()->json(['error' => 'No published plan found'], 404);
         }
 
