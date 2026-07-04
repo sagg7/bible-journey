@@ -54,6 +54,7 @@ class CrsNodeItem {
   final String? userFacingEra;
   final int? userFacingEraSort;
   final bool isMainStreamNode;
+  final bool locked;
 
   CrsNodeItem({
     required this.id,
@@ -71,6 +72,7 @@ class CrsNodeItem {
     this.userFacingEra,
     this.userFacingEraSort,
     this.isMainStreamNode = true,
+    this.locked = false,
   });
 
   String get displayTitle => titleEs ?? reference ?? sourceMap ?? '';
@@ -91,6 +93,7 @@ class CrsNodeItem {
     userFacingEra: j['user_facing_era'],
     userFacingEraSort: j['user_facing_era_sort'],
     isMainStreamNode: j['is_main_stream_node'] ?? true,
+    locked: j['locked'] ?? false,
   );
 }
 
@@ -237,6 +240,7 @@ class CrsNodeDetail {
   final CompareGroupRef? compareGroup;
   final StudyContent studyContent;
   final SpiritOfProphecyContent spiritOfProphecy;
+  final bool locked;
 
   CrsNodeDetail({
     required this.nodeId,
@@ -249,6 +253,7 @@ class CrsNodeDetail {
     this.compareGroup,
     required this.studyContent,
     required this.spiritOfProphecy,
+    this.locked = false,
   });
 
   factory CrsNodeDetail.fromJson(Map<String, dynamic> j) => CrsNodeDetail(
@@ -265,6 +270,7 @@ class CrsNodeDetail {
         ? CompareGroupRef.fromJson(j['compare_group'])
         : null,
     studyContent: StudyContent.fromJson(j['study_content'] ?? {}),
+    locked: j['locked'] ?? false,
     spiritOfProphecy: SpiritOfProphecyContent.fromJson(
       j['spirit_of_prophecy'] ?? {},
     ),
@@ -583,6 +589,33 @@ class EzraStructuredResponse {
         certaintyExplanation: j['certainty_explanation'],
         sources: ((j['sources'] as List?) ?? []).cast<String>(),
         reflectionQuestion: j['reflection_question'],
+      );
+}
+
+class MeProfile {
+  final int id;
+  final String name;
+  final String email;
+  final String subscriptionStatus;
+  final bool isPremium;
+  final int? institutionId;
+
+  MeProfile({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.subscriptionStatus,
+    required this.isPremium,
+    this.institutionId,
+  });
+
+  factory MeProfile.fromJson(Map<String, dynamic> j) => MeProfile(
+        id: j['id'] ?? 0,
+        name: j['name'] ?? '',
+        email: j['email'] ?? '',
+        subscriptionStatus: j['subscription_status'] ?? 'free',
+        isPremium: j['is_premium'] ?? false,
+        institutionId: j['institution_id'],
       );
 }
 

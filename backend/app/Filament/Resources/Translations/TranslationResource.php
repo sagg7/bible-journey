@@ -28,6 +28,11 @@ class TranslationResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return (bool) auth()->user()?->is_admin;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return TranslationForm::configure($schema);

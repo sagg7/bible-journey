@@ -2,13 +2,17 @@
 
 namespace App\Filament\Resources\Crs\Tables;
 
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class CrsTable
 {
@@ -61,6 +65,9 @@ class CrsTable
                     ->label('Bloques')
                     ->counts('blocks')
                     ->alignCenter(),
+
+                ToggleColumn::make('is_premium')
+                    ->label('Premium'),
             ])
             ->filters([
                 SelectFilter::make('era')
@@ -86,7 +93,21 @@ class CrsTable
                     ]),
             ])
             ->actions([EditAction::make()])
-            ->bulkActions([BulkActionGroup::make([DeleteBulkAction::make()])])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    BulkAction::make('markFree')
+                        ->label('Marcar como gratis')
+                        ->icon(Heroicon::OutlinedLockOpen)
+                        ->action(fn (Collection $records) => $records->each->update(['is_premium' => false]))
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('markPremium')
+                        ->label('Marcar como premium')
+                        ->icon(Heroicon::OutlinedLockClosed)
+                        ->action(fn (Collection $records) => $records->each->update(['is_premium' => true]))
+                        ->deselectRecordsAfterCompletion(),
+                    DeleteBulkAction::make(),
+                ]),
+            ])
             ->defaultSort('sort_key')
             ->striped();
     }

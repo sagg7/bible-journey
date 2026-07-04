@@ -410,7 +410,7 @@ class _NodeTile extends StatelessWidget {
                   Text(
                     node.displayTitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: textColor,
+                      color: node.locked ? textColor.withValues(alpha: 0.45) : textColor,
                       fontWeight: FontWeight.w500,
                       height: 1.35,
                     ),
@@ -423,7 +423,9 @@ class _NodeTile extends StatelessWidget {
               ),
             ),
 
-            Icon(Icons.chevron_right, size: 16, color: textColor.withValues(alpha: 0.25)),
+            node.locked
+                ? Icon(Icons.lock_outline, size: 15, color: BjColors.accentBronze.withValues(alpha: 0.7))
+                : Icon(Icons.chevron_right, size: 16, color: textColor.withValues(alpha: 0.25)),
           ],
         ),
       ),

@@ -113,7 +113,52 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
         appBar: AppBar(title: Text(s.t('tabLeer'))),
         body: Center(child: Text(e.toString())),
       ),
-      data: (node) => _buildReader(context, node, s),
+      data: (node) => node.locked
+          ? _buildLocked(context, node)
+          : _buildReader(context, node, s),
+    );
+  }
+
+  Widget _buildLocked(BuildContext context, CrsNodeDetail node) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, size: 48, color: BjColors.accentBronze),
+              const SizedBox(height: 16),
+              Text(
+                node.crs.titleEs,
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Este evento es parte del plan cronológico completo. Suscríbete para seguir la historia.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: cs.onSurfaceVariant, height: 1.5),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => context.push('/suscripcion'),
+                child: const Text('Ver planes de suscripción'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

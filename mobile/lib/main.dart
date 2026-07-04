@@ -6,7 +6,9 @@ import 'core/api.dart';
 import 'core/router.dart';
 import 'core/theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await configureRevenueCat();
   runApp(const ProviderScope(child: BibleJourneyApp()));
 }
 

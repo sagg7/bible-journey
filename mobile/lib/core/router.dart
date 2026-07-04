@@ -7,6 +7,7 @@ import '../screens/crs_reader_screen.dart';
 import '../screens/compare_accounts_screen.dart';
 import '../screens/ezra_v2_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/paywall_screen.dart';
 import '../screens/route_screen.dart';
 import '../screens/routes_list_screen.dart';
 import '../screens/translations_screen.dart';
@@ -53,6 +54,13 @@ final appRouter = GoRouter(
       path: '/traducciones',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (c, s) => const TranslationsScreen(),
+    ),
+
+    // Paywall / subscription
+    GoRoute(
+      path: '/suscripcion',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (c, s) => const PaywallScreen(),
     ),
 
     // CRS reader — plan/:planId/node/:nodeId

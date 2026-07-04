@@ -14,7 +14,9 @@ class StreamPlanController extends Controller
     // GET /api/v2/stream-plans/{id}    →  specific plan
     public function show(Request $request, string $id): JsonResponse
     {
-        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
+        $user = $request->user('sanctum');
+        $includeTestOnly = (bool) ($user?->has_test_access);
+        $hasAccess = (bool) ($user?->hasPremiumAccess());
 
         $plan = $id === 'active'
             ? StreamPlan::latestPublished(
@@ -30,13 +32,13 @@ class StreamPlanController extends Controller
 
         $nodes = $plan->nodes()
             ->with([
-                'crs:id,source_map,era,era_slug,sort_key,title_es,placement_confidence,review_status',
+                'crs:id,source_map,era,era_slug,sort_key,title_es,placement_confidence,review_status,is_premium',
                 'crs.blocks' => fn($q) => $q->orderBy('display_order')
                     ->select('id', 'crs_id', 'display_reference', 'display_order'),
             ])
             ->orderBy('rank')
             ->get()
-            ->map(fn($node) => $this->formatNode($node));
+            ->map(fn($node) => $this->formatNode($node, $hasAccess));
 
         $edges = $plan->edges()
             ->select('id', 'from_node_id', 'to_node_id', 'edge_type', 'score', 'priority')
@@ -59,7 +61,9 @@ class StreamPlanController extends Controller
     // GET /api/v2/stream-plans/{id}/nodes/{nodeId}
     public function showNode(Request $request, string $planId, string $nodeId): JsonResponse
     {
-        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
+        $user = $request->user('sanctum');
+        $includeTestOnly = (bool) ($user?->has_test_access);
+        $hasAccess = (bool) ($user?->hasPremiumAccess());
 
         $plan = $planId === 'active'
             ? StreamPlan::latestPublished(
@@ -76,7 +80,7 @@ class StreamPlanController extends Controller
         $node = StreamPlanNode::where('plan_id', $plan->id)
             ->where('id', $nodeId)
             ->with([
-                'crs:id,source_map,era,era_slug,sort_key,title_es,title_en,placement_confidence,event_confidence,narrative_flow_message_es,editorial_note',
+                'crs:id,source_map,era,era_slug,sort_key,title_es,title_en,placement_confidence,event_confidence,narrative_flow_message_es,editorial_note,is_premium',
                 'crs.blocks',
                 'crs.studyContent',
                 'crs.spiritOfProphecyContents',
@@ -84,7 +88,23 @@ class StreamPlanController extends Controller
             ])
             ->firstOrFail();
 
-        $crs    = $node->crs;
+        $crs = $node->crs;
+
+        if ($crs->is_premium && ! $hasAccess) {
+            return response()->json([
+                'node_id'   => $node->id,
+                'rank'      => $node->rank,
+                'locked'    => true,
+                'crs' => [
+                    'id'       => $crs->id,
+                    'era'      => $crs->era,
+                    'era_slug' => $crs->era_slug,
+                    'title_es' => $crs->title_es,
+                    'title_en' => $crs->title_en,
+                ],
+            ]);
+        }
+
         $blocks = $crs->blocks->map(fn($b) => [
             'id'                        => $b->id,
             'source_map'                => $b->source_map,
@@ -108,6 +128,7 @@ class StreamPlanController extends Controller
             'display_mode'       => $node->display_mode,
             'required_state'     => $node->required_state,
             'explanation_es'     => $node->explanation_es,
+            'locked'             => false,
             'crs' => [
                 'id'                     => $crs->id,
                 'source_map'             => $crs->source_map,
@@ -136,7 +157,9 @@ class StreamPlanController extends Controller
     // Returns only main-stream nodes grouped by user_facing_era, ordered by rank.
     public function chronological(Request $request, string $id): JsonResponse
     {
-        $includeTestOnly = (bool) ($request->user('sanctum')?->has_test_access);
+        $user = $request->user('sanctum');
+        $includeTestOnly = (bool) ($user?->has_test_access);
+        $hasAccess = (bool) ($user?->hasPremiumAccess());
 
         $plan = $id === 'active'
             ? StreamPlan::latestPublished(
@@ -153,7 +176,7 @@ class StreamPlanController extends Controller
         $mainNodes = $plan->nodes()
             ->where('is_main_stream_node', true)
             ->with([
-                'crs:id,source_map,era,era_slug,sort_key,title_es,placement_confidence,review_status,stream_role,user_facing_era,user_facing_era_sort,is_main_stream_node',
+                'crs:id,source_map,era,era_slug,sort_key,title_es,placement_confidence,review_status,stream_role,user_facing_era,user_facing_era_sort,is_main_stream_node,is_premium',
                 'crs.blocks' => fn($q) => $q->orderBy('display_order')
                     ->select('id', 'crs_id', 'display_reference', 'display_order'),
             ])
@@ -175,7 +198,7 @@ class StreamPlanController extends Controller
                     'nodes'               => [],
                 ];
             }
-            $eraGroups[$eraKey]['nodes'][] = $this->formatNode($node);
+            $eraGroups[$eraKey]['nodes'][] = $this->formatNode($node, $hasAccess);
         }
 
         $eras = array_values(array_map(fn($k) => $eraGroups[$k], $eraOrder));
@@ -188,7 +211,7 @@ class StreamPlanController extends Controller
         ]);
     }
 
-    private function formatNode(StreamPlanNode $node): array
+    private function formatNode(StreamPlanNode $node, bool $hasAccess = false): array
     {
         return [
             'id'                   => $node->id,
@@ -206,6 +229,7 @@ class StreamPlanController extends Controller
             'user_facing_era'      => $node->user_facing_era,
             'user_facing_era_sort' => $node->user_facing_era_sort,
             'is_main_stream_node'  => $node->is_main_stream_node,
+            'locked'               => (bool) ($node->crs?->is_premium) && ! $hasAccess,
         ];
     }
 

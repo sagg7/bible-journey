@@ -30,6 +30,11 @@ class CharacterResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return (bool) auth()->user()?->is_admin;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return CharacterForm::configure($schema);

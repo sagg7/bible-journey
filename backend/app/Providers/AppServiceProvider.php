@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Institution;
 use App\Services\Ezra\AnthropicClient;
 use App\Services\Ezra\LlmClientInterface;
 use App\Services\Ezra\OpenAICompatibleClient;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,5 +21,8 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    public function boot(): void {}
+    public function boot(): void
+    {
+        Cashier::useCustomerModel(Institution::class);
+    }
 }

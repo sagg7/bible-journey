@@ -47,6 +47,9 @@ class EzraV2Controller extends Controller
             ])->find($data['node_id']);
 
             if ($node?->crs) {
+                if ($node->crs->is_premium && ! $user?->hasPremiumAccess()) {
+                    return response()->json(['error' => 'Este contenido requiere suscripción.'], 403);
+                }
                 $crsContext = $this->buildCrsContext($node->crs, $locale);
             }
         }

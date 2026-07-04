@@ -17,10 +17,12 @@ class ChronologicalReadingSet extends Model
         'narrative_flow_message_es', 'transition_copy_es', 'editorial_note',
         'canon_profile', 'historical_event_id',
         'stream_role', 'user_facing_era', 'user_facing_era_sort', 'is_main_stream_node', 'display_mode',
+        'is_premium',
     ];
 
     protected $casts = [
         'is_main_stream_node' => 'boolean',
+        'is_premium' => 'boolean',
     ];
 
     public function blocks(): HasMany

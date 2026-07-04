@@ -73,7 +73,8 @@ class AuthController extends Controller
             'email' => $user->email,
             'subscription_status' => $user->subscription_status,
             'preferred_language' => $user->preferred_language,
-            'is_premium' => in_array($user->subscription_status, ['premium', 'active'], true),
+            'is_premium' => $user->hasPremiumAccess(),
+            'institution_id' => $user->institution_id,
         ];
     }
 }

@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../models/models.dart';
 import 'auth.dart';
@@ -11,6 +13,22 @@ const String apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://10.0.2.2:8000/api',
 );
+
+/// Llaves públicas del SDK de RevenueCat (una por tienda).
+/// Sobrescribe con --dart-define=REVENUECAT_API_KEY_ANDROID=... / _IOS=...
+const String _revenueCatApiKeyAndroid = String.fromEnvironment('REVENUECAT_API_KEY_ANDROID');
+const String _revenueCatApiKeyIos = String.fromEnvironment('REVENUECAT_API_KEY_IOS');
+
+/// Inicializa el SDK de RevenueCat. No-op en web (no hay compras in-app) o
+/// si no se pasó la llave correspondiente por --dart-define.
+Future<void> configureRevenueCat() async {
+  if (kIsWeb) return;
+  final apiKey = defaultTargetPlatform == TargetPlatform.iOS
+      ? _revenueCatApiKeyIos
+      : _revenueCatApiKeyAndroid;
+  if (apiKey.isEmpty) return;
+  await Purchases.configure(PurchasesConfiguration(apiKey));
+}
 
 /// Versión y número de compilación instalados (ej. "1.0.0 (2)"), leídos del
 /// paquete real en el dispositivo — útil para confirmar qué build está corriendo.
@@ -99,6 +117,15 @@ class ApiClient {
     try {
       await _dio.post('/logout');
     } catch (_) {} // best-effort: siempre limpiamos el token local
+  }
+
+  Future<MeProfile> me() async {
+    try {
+      final r = await _dio.get('/me');
+      return MeProfile.fromJson(r.data['user'] as Map<String, dynamic>);
+    } catch (e) {
+      _fail(e);
+    }
   }
 
   Future<Map<String, dynamic>> completeEvent(String routeSlug, String eventSlug) async {
@@ -225,6 +252,21 @@ class ApiClient {
 final translationsListProvider = FutureProvider<List<BibleTranslationOption>>((ref) {
   ref.watch(localeProvider);
   return ref.watch(apiProvider).translations();
+});
+
+/// Perfil del usuario autenticado (incluye is_premium). Null para invitados.
+/// Vincula el id de usuario con RevenueCat para que sus webhooks lleguen
+/// con el mismo app_user_id que usa el backend.
+final meProvider = FutureProvider<MeProfile?>((ref) async {
+  final token = ref.watch(authProvider);
+  if (token == null) return null;
+  final profile = await ref.watch(apiProvider).me();
+  if (!kIsWeb) {
+    try {
+      await Purchases.logIn(profile.id.toString());
+    } catch (_) {} // RevenueCat no configurado (falta --dart-define) o error de red
+  }
+  return profile;
 });
 
 // ─── V2 providers ────────────────────────────────────────────────────────────

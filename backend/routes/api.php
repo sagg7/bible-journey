@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\EzraController;
 use App\Http\Controllers\Api\ProgressController;
 use App\Http\Controllers\Api\ReadingController;
+use App\Http\Controllers\Api\RevenueCatWebhookController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\V2\CompareGroupController;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Route;
 // --- Público (lectura), con idioma resuelto por el middleware SetLocale ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/webhooks/revenuecat', [RevenueCatWebhookController::class, 'handle']);
 
 Route::get('/translations', [TranslationController::class, 'index']);
 Route::get('/routes', [RouteController::class, 'index']);

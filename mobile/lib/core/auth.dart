@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _tokenKey = 'bible_journey_token';
@@ -23,6 +25,11 @@ class AuthNotifier extends StateNotifier<String?> {
     state = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+    if (!kIsWeb) {
+      try {
+        await Purchases.logOut();
+      } catch (_) {}
+    }
   }
 }
 

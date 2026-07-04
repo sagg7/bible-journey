@@ -47,4 +47,10 @@ return [
         'api_base' => 'https://api.youversion.com/v1',
     ],
 
+    'revenuecat' => [
+        'webhook_secret' => env('REVENUECAT_WEBHOOK_SECRET'),
+    ],
+
+    'stripe_institution_price_id' => env('STRIPE_INSTITUTION_PRICE_ID'),
+
 ];

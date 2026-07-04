@@ -29,6 +29,11 @@ class StreamPlanResource extends Resource
 
     protected static ?int $navigationSort = 10;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return (bool) auth()->user()?->is_admin;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return StreamPlanForm::configure($schema);

@@ -30,6 +30,11 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return (bool) auth()->user()?->is_admin;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);
