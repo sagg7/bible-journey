@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../models/models.dart';
 import 'auth.dart';
@@ -10,6 +11,13 @@ const String apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://10.0.2.2:8000/api',
 );
+
+/// Versión y número de compilación instalados (ej. "1.0.0 (2)"), leídos del
+/// paquete real en el dispositivo — útil para confirmar qué build está corriendo.
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return '${info.version} (${info.buildNumber})';
+});
 
 /// Idioma actual de la app (es/en). El interceptor lo envía como X-Locale.
 final localeProvider = StateProvider<String>((ref) => 'es');

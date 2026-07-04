@@ -75,7 +75,25 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ),
-        title: Text(_greeting()),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_greeting()),
+            Consumer(
+              builder: (context, ref, _) {
+                final version = ref.watch(appVersionProvider);
+                return Text(
+                  version.maybeWhen(data: (v) => 'v$v', orElse: () => ''),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
         actions: [
           const _AccountButton(),
           IconButton(
@@ -89,6 +107,7 @@ class HomeScreen extends ConsumerWidget {
       body: planAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(
+          error: e,
           onRetry: () => ref.invalidate(streamPlanProvider),
         ),
         data: (plan) {
@@ -582,12 +601,14 @@ class _AccountButton extends ConsumerWidget {
 
 // ─── Error view ───────────────────────────────
 
-class _ErrorView extends StatelessWidget {
+class _ErrorView extends ConsumerWidget {
+  final Object? error;
   final VoidCallback onRetry;
-  const _ErrorView({required this.onRetry});
+  const _ErrorView({this.error, required this.onRetry});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final version = ref.watch(appVersionProvider);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -597,8 +618,21 @@ class _ErrorView extends StatelessWidget {
             Icon(Icons.cloud_off, size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             const Text('No se pudo cargar el contenido.', textAlign: TextAlign.center),
+            if (error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ],
             const SizedBox(height: 12),
             FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
+            const SizedBox(height: 16),
+            Text(
+              version.maybeWhen(data: (v) => 'Versión $v', orElse: () => ''),
+              style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
           ],
         ),
       ),
