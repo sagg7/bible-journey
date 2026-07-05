@@ -218,6 +218,75 @@ class ApiClient {
       _fail(e);
     }
   }
+
+  // ─── Verse highlights (/api/v2/highlights, requires session) ────────────
+
+  Future<List<VerseHighlight>> highlights({String? book, int? chapter, int? colorId}) async {
+    try {
+      final r = await _dio.get('/v2/highlights', queryParameters: {
+        if (book != null) 'book': book,
+        if (chapter != null) 'chapter': chapter,
+        if (colorId != null) 'color_id': colorId,
+      });
+      return ((r.data['data'] as List?) ?? [])
+          .map((e) => VerseHighlight.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  Future<VerseHighlight> createHighlight({
+    required String book,
+    required int chapter,
+    required int verseStart,
+    required int verseEnd,
+    required String colorHex,
+    String? label,
+  }) async {
+    try {
+      final r = await _dio.post('/v2/highlights', data: {
+        'book': book,
+        'chapter': chapter,
+        'verse_start': verseStart,
+        'verse_end': verseEnd,
+        'color_hex': colorHex,
+        'label': ?label,
+      });
+      return VerseHighlight.fromJson(r.data['data'] as Map<String, dynamic>);
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  Future<bool> deleteHighlight(int id) async {
+    try {
+      await _dio.delete('/v2/highlights/$id');
+      return true;
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  Future<List<HighlightColorInfo>> highlightColors() async {
+    try {
+      final r = await _dio.get('/v2/highlight-colors');
+      return ((r.data['data'] as List?) ?? [])
+          .map((e) => HighlightColorInfo.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  Future<HighlightColorInfo> renameHighlightColor(int id, String label) async {
+    try {
+      final r = await _dio.patch('/v2/highlight-colors/$id', data: {'label': label});
+      return HighlightColorInfo.fromJson(r.data['data'] as Map<String, dynamic>);
+    } catch (e) {
+      _fail(e);
+    }
+  }
 }
 
 // --- Providers de datos ---
@@ -299,4 +368,35 @@ final neighborNodesProvider =
     },
     orElse: () => (prevId: null, nextId: null),
   );
+});
+
+// ─── Verse highlights ────────────────────────────────────────────────────
+
+/// Highlights in a given book+chapter, for rendering colored backgrounds in
+/// the reader. Empty (no network call) when the user isn't logged in.
+/// Family key: (osisCode, chapterNumber)
+final chapterHighlightsProvider =
+    FutureProvider.family<List<VerseHighlight>, (String, int)>((ref, key) async {
+  if (ref.watch(authProvider) == null) return [];
+  final (osisCode, chapter) = key;
+  return ref.watch(apiProvider).highlights(book: osisCode, chapter: chapter);
+});
+
+/// All of the user's highlights across the whole Bible — used by "Mis subrayados".
+final allHighlightsProvider = FutureProvider<List<VerseHighlight>>((ref) async {
+  if (ref.watch(authProvider) == null) return [];
+  return ref.watch(apiProvider).highlights();
+});
+
+/// Highlights filtered to a single color/label.
+final highlightsByColorProvider =
+    FutureProvider.family<List<VerseHighlight>, int>((ref, colorId) async {
+  if (ref.watch(authProvider) == null) return [];
+  return ref.watch(apiProvider).highlights(colorId: colorId);
+});
+
+/// The user's saved highlight colors with their labels and usage counts.
+final highlightColorsProvider = FutureProvider<List<HighlightColorInfo>>((ref) async {
+  if (ref.watch(authProvider) == null) return [];
+  return ref.watch(apiProvider).highlightColors();
 });

@@ -6,6 +6,8 @@ import '../core/api.dart';
 import '../core/local_progress.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import '../widgets/highlight_selection_bar.dart';
+import '../widgets/text_zoom_sheet.dart';
 
 class CanonicalChapterScreen extends ConsumerStatefulWidget {
   final String osisCode;
@@ -25,11 +27,13 @@ class CanonicalChapterScreen extends ConsumerStatefulWidget {
 class _CanonicalChapterScreenState
     extends ConsumerState<CanonicalChapterScreen> {
   late int _currentChapter;
+  final HighlightSelection _selection = HighlightSelection();
 
   @override
   void initState() {
     super.initState();
     _currentChapter = widget.chapter;
+    _selection.addListener(_onSelectionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(localProgressProvider.notifier)
@@ -37,7 +41,16 @@ class _CanonicalChapterScreenState
     });
   }
 
+  @override
+  void dispose() {
+    _selection.removeListener(_onSelectionChanged);
+    super.dispose();
+  }
+
+  void _onSelectionChanged() => setState(() {});
+
   void _goChapter(int chapter) {
+    _selection.clear();
     setState(() => _currentChapter = chapter);
     ref
         .read(localProgressProvider.notifier)
@@ -74,7 +87,27 @@ class _CanonicalChapterScreenState
             ],
           ),
         ),
-        data: (content) => _buildContent(context, content, textColor, isDark),
+        data: (content) => Stack(
+          children: [
+            _buildContent(context, content, textColor, isDark),
+            if (_selection.isActive)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: HighlightSelectionBar(
+                  bookOsisCode: widget.osisCode,
+                  bookNameEs: content.bookNameEs,
+                  chapter: _currentChapter,
+                  verses: content.verses,
+                  translationCode: content.translationCode,
+                  selection: _selection,
+                  onSaved: () => setState(_selection.clear),
+                  onCancel: () => setState(_selection.clear),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -82,6 +115,11 @@ class _CanonicalChapterScreenState
   Widget _buildContent(BuildContext context, CanonicalChapterContent content,
       Color textColor, bool isDark) {
     final theme = Theme.of(context);
+    final fontScale = ref.watch(localProgressProvider).value?.fontScale ?? 1.0;
+    final highlights = ref
+            .watch(chapterHighlightsProvider((widget.osisCode, _currentChapter)))
+            .value ??
+        [];
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -111,6 +149,7 @@ class _CanonicalChapterScreenState
             ],
           ),
           actions: [
+            TextZoomButton(color: textColor.withValues(alpha: 0.7)),
             if (content.translationCode != null)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -185,25 +224,47 @@ class _CanonicalChapterScreenState
               delegate: SliverChildBuilderDelegate(
                 (_, i) {
                   final v = content.verses[i];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${v.verse} ',
-                            style: TextStyle(
-                              color: textColor.withValues(alpha: 0.35),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                  final selected = _selection.contains(v.verse);
+                  final savedHex = highlights
+                      .where((h) => h.containsVerse(v.verse))
+                      .map((h) => h.color.hex)
+                      .firstOrNull;
+
+                  return GestureDetector(
+                    onLongPress: () => setState(() => _selection.beginAt(v.verse)),
+                    onTap: _selection.isActive
+                        ? () => setState(() => _selection.extendTo(v.verse))
+                        : null,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? BjColors.accentPrimary.withValues(alpha: 0.25)
+                            : savedHex != null
+                                ? hexToColor(savedHex).withValues(alpha: 0.35)
+                                : null,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${v.verse} ',
+                              style: TextStyle(
+                                color: textColor.withValues(alpha: 0.35),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: v.text,
-                            style: scriptureTextStyle(fontSize: 17, height: 1.8)
-                                .copyWith(color: textColor),
-                          ),
-                        ],
+                            TextSpan(
+                              text: v.text,
+                              style: scriptureTextStyle(
+                                      fontSize: 17 * fontScale, height: 1.8)
+                                  .copyWith(color: textColor),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
