@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V2\CompareGroupController;
 use App\Http\Controllers\Api\V2\PassageController;
 use App\Http\Controllers\Api\V2\ExplanationController;
 use App\Http\Controllers\Api\V2\EzraV2Controller;
+use App\Http\Controllers\Api\V2\HighlightController;
 use App\Http\Controllers\Api\V2\ProgressV2Controller;
 use App\Http\Controllers\Api\V2\StreamPlanController;
 use Illuminate\Support\Facades\Route;
@@ -61,4 +62,10 @@ Route::prefix('v2')->middleware('auth:sanctum')->group(function () {
     Route::post('/progress/nodes/{nodeId}',     [ProgressV2Controller::class, 'markNodeState']);
     Route::get('/progress/summary',             [ProgressV2Controller::class, 'summary']);
     Route::post('/ezra/answer',                 [EzraV2Controller::class, 'answer']);
+
+    Route::get('/highlights',                   [HighlightController::class, 'index']);
+    Route::post('/highlights',                  [HighlightController::class, 'store']);
+    Route::delete('/highlights/{id}',           [HighlightController::class, 'destroy']);
+    Route::get('/highlight-colors',             [HighlightController::class, 'colors']);
+    Route::patch('/highlight-colors/{id}',      [HighlightController::class, 'updateColor']);
 });

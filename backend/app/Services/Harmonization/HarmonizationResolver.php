@@ -29,6 +29,7 @@ class HarmonizationResolver
     // Used to break ties when sort_key alone can't distinguish cross-era order.
     private const ERA_CANONICAL_ORDER = [
         // OT — pre-monarchy
+        'primeval-history'                               =>   5,
         'patriarchs'                                     =>  10,
         'exodus-sinai'                                   =>  20,
         'wilderness'                                     =>  30,
@@ -93,8 +94,12 @@ class HarmonizationResolver
         'persian-period'                                 => 154,
         'post-exilic-restoration-horizon'                => 155,
         'chronological-placement-unresolved'             => 160,
+        // Intertestamental bridge
+        'intertestamental-period'                        => 190,
         // NT
         'gospels-ministry-of-jesus'                      => 200,
+        'gospel-harmony'                                 => 201,
+        'acts-of-the-apostles'                           => 209,
         'acts-jerusalem'                                 => 210,
         'acts-samaria-and-judea'                         => 211,
         'acts-damascus-and-judea'                        => 212,
@@ -103,6 +108,7 @@ class HarmonizationResolver
         'acts-jerusalem-and-antioch'                     => 215,
         'first-mission'                                  => 216,
         'pauline-letter'                                 => 217,
+        'pauline-missions'                               => 217.5,
         'second-mission'                                 => 218,
         'third-mission'                                  => 219,
         'acts-caesarea'                                  => 220,
@@ -110,6 +116,7 @@ class HarmonizationResolver
         'acts-rome'                                      => 222,
         'pauline-letters'                                => 223,
         'correspondence-beyond-acts'                     => 224,
+        'general-letters-and-apocalypse'                 => 225,
         'apocalyptic-witness'                            => 230,
     ];
 
@@ -149,9 +156,12 @@ class HarmonizationResolver
         // Hard constraints
         $this->applyHardConstraints($nodes, $edges);
 
-        // Cycle detection
-        $cycles = $this->detectCycles($nodes, $edges);
-        if (! empty($cycles)) {
+        // Cycle detection — loop until none remain. Breaking one cycle in a densely
+        // overlapping cluster (e.g. Samuel/Chronicles/Psalms parallel accounts) can leave
+        // another overlapping cycle intact, since its edges may not have been touched.
+        for ($pass = 0; $pass < 25; $pass++) {
+            $cycles = $this->detectCycles($nodes, $edges);
+            if (empty($cycles)) break;
             foreach ($cycles as $cycle) {
                 $this->warnings[] = "Cycle detected: " . implode(' → ', $cycle);
             }
@@ -370,19 +380,39 @@ class HarmonizationResolver
 
     private function breakCycles(array $nodes, array $edges, array $cycles): array
     {
-        // Remove the lowest-score edge in each cycle
+        // Remove the lowest-score edge actually on each cycle's path (adjacent pairs only —
+        // not any edge between two nodes that merely co-occur in an overlapping cycle, which
+        // previously let this strip legitimate SEQUENTIAL_DIRECT edges and orphan main-stream
+        // nodes). Prefer breaking a non-sequential (thematic/parallel) edge so the main
+        // forward reading path is never the one severed; a cycle can only exist because a
+        // non-sequential edge points backward relative to the forward chain, so a sequential
+        // edge should never need to be removed in practice.
         foreach ($cycles as $cycle) {
+            $n = count($cycle);
+            $candidates = [];
+            for ($i = 0; $i < $n; $i++) {
+                $fromMap = $cycle[$i];
+                $toMap   = $cycle[($i + 1) % $n];
+                foreach ($edges as $key => $edge) {
+                    $eFromMap = $nodes[$edge['from_node_id']]['source_map'] ?? '';
+                    $eToMap   = $nodes[$edge['to_node_id']]['source_map'] ?? '';
+                    if ($eFromMap === $fromMap && $eToMap === $toMap) {
+                        $candidates[$key] = $edge;
+                    }
+                }
+            }
+
+            if (empty($candidates)) continue;
+
+            $nonSequential = array_filter($candidates, fn($e) => $e['edge_type'] !== 'SEQUENTIAL_DIRECT');
+            $pool = $nonSequential ?: $candidates;
+
             $lowestScore = PHP_FLOAT_MAX;
             $lowestKey   = null;
-
-            foreach ($edges as $key => $edge) {
-                $fromMap = $nodes[$edge['from_node_id']]['source_map'] ?? '';
-                $toMap   = $nodes[$edge['to_node_id']]['source_map'] ?? '';
-                if (in_array($fromMap, $cycle) && in_array($toMap, $cycle)) {
-                    if ($edge['score'] < $lowestScore) {
-                        $lowestScore = $edge['score'];
-                        $lowestKey   = $key;
-                    }
+            foreach ($pool as $key => $edge) {
+                if ($edge['score'] < $lowestScore) {
+                    $lowestScore = $edge['score'];
+                    $lowestKey   = $key;
                 }
             }
 
@@ -502,11 +532,19 @@ class HarmonizationResolver
                 $nodeIdMap[$crsId] = $planNode->id;
             }
 
-            // Persist edges
+            // Persist edges. Different edge sources (sequential era-adjacency vs.
+            // approved ParallelLinks) can independently resolve to the same
+            // (from, to) node pair; stream_plan_edges has a unique constraint on
+            // that pair, so keep only the first edge seen for a given pair.
+            $seenPairs = [];
             foreach ($edges as $edge) {
                 $fromPlanNodeId = $nodeIdMap[$edge['from_node_id']] ?? null;
                 $toPlanNodeId   = $nodeIdMap[$edge['to_node_id']] ?? null;
                 if (! $fromPlanNodeId || ! $toPlanNodeId) continue;
+
+                $pairKey = "{$fromPlanNodeId}-{$toPlanNodeId}";
+                if (isset($seenPairs[$pairKey])) continue;
+                $seenPairs[$pairKey] = true;
 
                 StreamPlanEdge::create([
                     'plan_id'      => $plan->id,
