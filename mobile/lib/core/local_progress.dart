@@ -8,6 +8,7 @@ class LocalProgress {
   final String? lastCanonicalOsisCode;
   final int? lastCanonicalChapter;
   final String translationCode;
+  final double fontScale;
 
   const LocalProgress({
     this.completedBlockIds = const {},
@@ -16,6 +17,7 @@ class LocalProgress {
     this.lastCanonicalOsisCode,
     this.lastCanonicalChapter,
     this.translationCode = 'RVA1909',
+    this.fontScale = 1.0,
   });
 
   bool isCompleted(int blockId) => completedBlockIds.contains(blockId);
@@ -27,6 +29,7 @@ class LocalProgress {
     String? lastCanonicalOsisCode,
     int? lastCanonicalChapter,
     String? translationCode,
+    double? fontScale,
   }) =>
       LocalProgress(
         completedBlockIds: completedBlockIds ?? this.completedBlockIds,
@@ -35,8 +38,12 @@ class LocalProgress {
         lastCanonicalOsisCode: lastCanonicalOsisCode ?? this.lastCanonicalOsisCode,
         lastCanonicalChapter: lastCanonicalChapter ?? this.lastCanonicalChapter,
         translationCode: translationCode ?? this.translationCode,
+        fontScale: fontScale ?? this.fontScale,
       );
 }
+
+const kMinFontScale = 0.85;
+const kMaxFontScale = 1.7;
 
 class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
   static const _kCompleted = 'bj_completed_blocks';
@@ -45,6 +52,7 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
   static const _kLastOsis = 'bj_last_osis';
   static const _kLastChapter = 'bj_last_chapter';
   static const _kTranslation = 'bj_translation';
+  static const _kFontScale = 'bj_font_scale';
 
   @override
   Future<LocalProgress> build() async {
@@ -57,6 +65,7 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
       lastCanonicalOsisCode: prefs.getString(_kLastOsis),
       lastCanonicalChapter: prefs.getInt(_kLastChapter),
       translationCode: prefs.getString(_kTranslation) ?? 'RVA1909',
+      fontScale: prefs.getDouble(_kFontScale) ?? 1.0,
     );
   }
 
@@ -92,6 +101,14 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kTranslation, code);
     state = AsyncData(current.copyWith(translationCode: code));
+  }
+
+  Future<void> setFontScale(double scale) async {
+    final clamped = scale.clamp(kMinFontScale, kMaxFontScale);
+    final current = await future;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_kFontScale, clamped);
+    state = AsyncData(current.copyWith(fontScale: clamped));
   }
 }
 

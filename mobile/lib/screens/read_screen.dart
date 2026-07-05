@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/api.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import 'highlights_browse_view.dart';
 
 // Canonical biblical books in order with chapter counts (Spanish names)
 const _canonicalBooks = [
@@ -108,7 +109,7 @@ class _ReadScreenState extends ConsumerState<ReadScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -132,6 +133,7 @@ class _ReadScreenState extends ConsumerState<ReadScreen>
         children: const [
           _CronologicaView(),
           _CanonicalView(),
+          HighlightsBrowseView(),
         ],
       ),
     );
@@ -171,6 +173,7 @@ class _ModeToggleState extends State<_ModeToggle> {
           children: [
             _Option(label: 'Cronológica', selected: selected == 0, onTap: () => widget.controller.animateTo(0)),
             _Option(label: 'Canónica', selected: selected == 1, onTap: () => widget.controller.animateTo(1)),
+            _Option(label: 'Subrayados', selected: selected == 2, onTap: () => widget.controller.animateTo(2)),
           ],
         ),
       ),

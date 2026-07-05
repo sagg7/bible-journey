@@ -8,8 +8,10 @@ import '../core/local_progress.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import '../widgets/highlight_selection_bar.dart';
 import '../widgets/narrative_flow_sheet.dart';
 import '../widgets/study_mode_sheet.dart';
+import '../widgets/text_zoom_sheet.dart';
 
 /// The block to render as the main scripture text. Prefers the
 /// `narrative_anchor` block; if a CRS has no anchor (it's a standalone
@@ -34,6 +36,7 @@ class CrsReaderScreen extends ConsumerStatefulWidget {
 
 class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
   final ScrollController _scroll = ScrollController();
+  final HighlightSelection _selection = HighlightSelection();
   bool _showDeepening = false;
   bool _focusMode = false;
 
@@ -41,6 +44,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    _selection.addListener(_onSelectionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(localProgressProvider.notifier).setLastNode(widget.planId, widget.nodeId);
     });
@@ -49,6 +53,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
   @override
   void dispose() {
     _scroll.dispose();
+    _selection.removeListener(_onSelectionChanged);
     super.dispose();
   }
 
@@ -58,9 +63,12 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
     }
   }
 
+  void _onSelectionChanged() => setState(() {});
+
   void _toggleFocus() => setState(() => _focusMode = !_focusMode);
 
   void _swipeTo(BuildContext context, int nodeId) {
+    _selection.clear();
     context.replace('/crs/${widget.planId}/$nodeId');
   }
 
@@ -172,6 +180,9 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
     final related = node.blocks.where((b) => b.id != anchor?.id).toList();
 
     final neighbors = ref.watch(neighborNodesProvider((widget.planId, widget.nodeId)));
+    final blockDetailAsync =
+        anchor != null ? ref.watch(readingBlockProvider(anchor.id)) : null;
+    final blockDetail = blockDetailAsync?.value;
 
     return GestureDetector(
       onTap: _focusMode ? _toggleFocus : null,
@@ -208,7 +219,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
                                   color: textColor.withValues(alpha: 0.5)),
                             ),
                             IconButton(
-                              icon: Icon(Icons.text_fields,
+                              icon: Icon(Icons.center_focus_strong,
                                   color: textColor.withValues(alpha: 0.5)),
                               onPressed: _toggleFocus,
                             ),
@@ -259,6 +270,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
                     textColor: textColor,
                     isDark: isDark,
                     s: s,
+                    selection: _selection,
                   ),
                 ),
 
@@ -285,11 +297,28 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
             ),
 
             // Focus toggle button
-            if (!_focusMode)
+            if (!_focusMode && !_selection.isActive)
               Positioned(
                 right: 20,
                 bottom: 30,
                 child: _FocusModeButton(onTap: _toggleFocus, isDark: isDark),
+              ),
+
+            if (_selection.isActive && blockDetail != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: HighlightSelectionBar(
+                  bookOsisCode: blockDetail.bookOsisCode ?? '',
+                  bookNameEs: blockDetail.bookNameEs ?? '',
+                  chapter: blockDetail.primaryChapter ?? 1,
+                  verses: blockDetail.verses,
+                  translationCode: blockDetail.translationCode,
+                  selection: _selection,
+                  onSaved: () => setState(_selection.clear),
+                  onCancel: () => setState(_selection.clear),
+                ),
               ),
           ],
         ),
@@ -328,6 +357,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
         ],
       ),
       actions: [
+        TextZoomButton(color: theme.colorScheme.onSurfaceVariant),
         if (node.compareGroup != null)
           IconButton(
             icon: const Icon(Icons.compare_arrows),
@@ -412,6 +442,7 @@ class _ScriptureBody extends ConsumerWidget {
   final Color textColor;
   final bool isDark;
   final AppStrings s;
+  final HighlightSelection selection;
 
   const _ScriptureBody({
     required this.block,
@@ -419,6 +450,7 @@ class _ScriptureBody extends ConsumerWidget {
     required this.textColor,
     required this.isDark,
     required this.s,
+    required this.selection,
   });
 
   @override
@@ -428,6 +460,7 @@ class _ScriptureBody extends ConsumerWidget {
     }
 
     final blockAsync = ref.watch(readingBlockProvider(block!.id));
+    final fontScale = ref.watch(localProgressProvider).value?.fontScale ?? 1.0;
 
     return blockAsync.when(
       loading: () => const Padding(
@@ -441,6 +474,12 @@ class _ScriptureBody extends ConsumerWidget {
           return _referenceOnlyBox(
               context, s.t('referenciaYContextoDisponibles'));
         }
+        final bookOsisCode = detail.bookOsisCode ?? '';
+        final chapter = detail.primaryChapter ?? 0;
+        final highlights =
+            ref.watch(chapterHighlightsProvider((bookOsisCode, chapter))).value ??
+                [];
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
@@ -456,8 +495,27 @@ class _ScriptureBody extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(height: 16),
-              ...detail.verses.map((v) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+              ...detail.verses.map((v) {
+                final selected = selection.contains(v.verse);
+                final savedHex = highlights
+                    .where((h) => h.containsVerse(v.verse))
+                    .map((h) => h.color.hex)
+                    .firstOrNull;
+
+                return GestureDetector(
+                  onLongPress: () => selection.beginAt(v.verse),
+                  onTap: selection.isActive ? () => selection.extendTo(v.verse) : null,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? BjColors.accentPrimary.withValues(alpha: 0.25)
+                          : savedHex != null
+                              ? hexToColor(savedHex).withValues(alpha: 0.35)
+                              : null,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: RichText(
                       text: TextSpan(
                         children: [
@@ -471,13 +529,16 @@ class _ScriptureBody extends ConsumerWidget {
                           ),
                           TextSpan(
                             text: v.text,
-                            style: scriptureTextStyle(fontSize: 17, height: 1.8)
+                            style: scriptureTextStyle(
+                                    fontSize: 17 * fontScale, height: 1.8)
                                 .copyWith(color: textColor),
                           ),
                         ],
                       ),
                     ),
-                  )),
+                  ),
+                );
+              }),
               const SizedBox(height: 32),
             ],
           ),
@@ -741,7 +802,7 @@ class _FocusModeButton extends StatelessWidget {
           ],
         ),
         child: Icon(
-          Icons.text_fields,
+          Icons.center_focus_strong,
           size: 20,
           color: isDark
               ? BjColors.textPrimaryDark.withValues(alpha: 0.7)

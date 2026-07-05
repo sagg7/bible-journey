@@ -30,6 +30,10 @@ mobile/ios/.symlinks/
 mobile/ios/Flutter/Flutter.framework
 mobile/ios/Flutter/Flutter.podspec
 mobile/.env
+mobile/.fvm/
+
+# --- Local tooling ---
+.claude/
 
 # --- General ---
 .DS_Store

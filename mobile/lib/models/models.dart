@@ -670,6 +670,8 @@ class ReadingBlockDetail {
   final List<BibleVerseItem> verses;
   final String? translationCode;
   final String? translationName;
+  final String? bookOsisCode;
+  final String? bookNameEs;
 
   ReadingBlockDetail({
     required this.hasText,
@@ -677,7 +679,13 @@ class ReadingBlockDetail {
     required this.verses,
     this.translationCode,
     this.translationName,
+    this.bookOsisCode,
+    this.bookNameEs,
   });
+
+  /// The chapter number shared by this block's verses (reading blocks are
+  /// almost always a single chapter). Used to address highlights/sharing.
+  int? get primaryChapter => verses.isEmpty ? null : verses.first.chapter;
 
   factory ReadingBlockDetail.fromJson(Map<String, dynamic> j) =>
       ReadingBlockDetail(
@@ -688,6 +696,8 @@ class ReadingBlockDetail {
             .toList(),
         translationCode: (j['translation'] as Map<String, dynamic>?)?['code'],
         translationName: (j['translation'] as Map<String, dynamic>?)?['name'],
+        bookOsisCode: (j['book'] as Map<String, dynamic>?)?['osis_code'],
+        bookNameEs: (j['book'] as Map<String, dynamic>?)?['name_es'],
       );
 }
 
@@ -743,6 +753,65 @@ class CanonicalChapterContent {
       translationName: (j['translation'] as Map<String, dynamic>?)?['name'],
       prevChapter: nav['prev_chapter'] as int?,
       nextChapter: nav['next_chapter'] as int?,
+    );
+  }
+}
+
+// ─── Verse highlights ───────────────────────────────────────────────────────
+
+class HighlightColorInfo {
+  final int id;
+  final String hex;
+  final String? label;
+  final int count;
+
+  HighlightColorInfo({
+    required this.id,
+    required this.hex,
+    this.label,
+    this.count = 0,
+  });
+
+  factory HighlightColorInfo.fromJson(Map<String, dynamic> j) =>
+      HighlightColorInfo(
+        id: j['id'],
+        hex: j['hex'],
+        label: j['label'],
+        count: j['count'] ?? 0,
+      );
+}
+
+class VerseHighlight {
+  final int id;
+  final String bookOsisCode;
+  final String bookNameEs;
+  final int chapter;
+  final int verseStart;
+  final int verseEnd;
+  final HighlightColorInfo color;
+
+  VerseHighlight({
+    required this.id,
+    required this.bookOsisCode,
+    required this.bookNameEs,
+    required this.chapter,
+    required this.verseStart,
+    required this.verseEnd,
+    required this.color,
+  });
+
+  bool containsVerse(int verse) => verse >= verseStart && verse <= verseEnd;
+
+  factory VerseHighlight.fromJson(Map<String, dynamic> j) {
+    final book = j['book'] as Map<String, dynamic>? ?? {};
+    return VerseHighlight(
+      id: j['id'],
+      bookOsisCode: book['osis_code'] ?? '',
+      bookNameEs: book['name_es'] ?? '',
+      chapter: j['chapter'] ?? 0,
+      verseStart: j['verse_start'] ?? 0,
+      verseEnd: j['verse_end'] ?? 0,
+      color: HighlightColorInfo.fromJson(j['color'] as Map<String, dynamic>),
     );
   }
 }
