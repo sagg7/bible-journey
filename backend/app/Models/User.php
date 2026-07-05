@@ -60,10 +60,20 @@ class User extends Authenticatable implements FilamentUser
 
     /**
      * True if the user should get premium content, either via their own
-     * RevenueCat subscription or via an active institutional (Stripe) plan.
+     * RevenueCat subscription, an active institutional (Stripe) plan, or
+     * tester status. `has_test_access` is orthogonal to premium — it's
+     * granted for early access to unreleased content, not payment — but a
+     * tester should never hit the paywall while it's being rolled out with
+     * an incomplete payment setup, so it's OR'd in here rather than merged
+     * into subscription_status. A user can be premium without being a
+     * tester, and vice versa.
      */
     public function hasPremiumAccess(): bool
     {
+        if ($this->has_test_access) {
+            return true;
+        }
+
         if ($this->institution_id && $this->institution?->subscribed('default')) {
             return true;
         }
