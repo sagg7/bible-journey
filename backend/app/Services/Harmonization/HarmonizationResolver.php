@@ -171,6 +171,19 @@ class HarmonizationResolver
         // Topological order
         $ordered = $this->topologicalOrder($nodes, $edges);
 
+        // Reposition literary-window nodes (Psalms, Chronicles parallels, etc.) next to
+        // their approved ParallelLink anchor. Era-transition edges treat each era_slug as
+        // an atomic block (all of era A before all of era B), so a Psalm whose true
+        // chronological position is mid-way through "united-monarchy" but whose own
+        // era_slug is "davidic-poetry-collection" (ordered after it) can never land there
+        // via graph edges alone — a ParallelLink edge pointing back into era A would create
+        // a cycle with the transition edge, and cycle-breaking prefers to drop that (non
+        // sequential) link edge rather than the coarse era chain. This post-pass — the same
+        // algorithm as the one-time `stream-plans:fix-psalm-chronology` command that was
+        // run by hand against Plan 10 — makes every future compile self-correcting instead
+        // of depending on that manual step.
+        $ordered = $this->repositionLinkedLiteraryNodes($ordered, $nodes);
+
         // Assign ranks
         foreach ($ordered as $rank => $nodeId) {
             $nodes[$nodeId]['rank'] = $rank + 1;
@@ -487,6 +500,79 @@ class HarmonizationResolver
         }
 
         return $ordered;
+    }
+
+    // ─── Literary-window repositioning ────────────
+
+    private function repositionLinkedLiteraryNodes(array $ordered, array $nodes): array
+    {
+        $links = ParallelLink::where('approved', true)
+            ->with(['sourceBlock.crs', 'targetBlock.crs'])
+            ->get();
+
+        $pairs = [];
+        foreach ($links as $link) {
+            $srcCrsId = $link->sourceBlock?->crs_id;
+            $tgtCrsId = $link->targetBlock?->crs_id;
+
+            if (! $srcCrsId || ! $tgtCrsId || $srcCrsId === $tgtCrsId) continue;
+            if (! isset($nodes[$srcCrsId], $nodes[$tgtCrsId])) continue;
+
+            $pairs[$srcCrsId] = $tgtCrsId;
+        }
+
+        if (empty($pairs)) {
+            return $ordered;
+        }
+
+        [$result, $unresolved] = self::reorderByParallelLinks($ordered, $pairs);
+
+        if ($unresolved > 0) {
+            $this->warnings[] = "{$unresolved} linked literary-window node(s) could not be repositioned (target not found); appended at end.";
+        }
+
+        return $result;
+    }
+
+    /**
+     * Pure reordering algorithm shared with `stream-plans:fix-psalm-chronology`
+     * (which applies the same logic directly to a persisted, published plan).
+     * Moves each key of $pairs to sit immediately after its value, preserving
+     * relative order among nodes with the same target and leaving everything
+     * else untouched. Returns [newOrder, unresolvedCount].
+     */
+    public static function reorderByParallelLinks(array $order, array $pairs): array
+    {
+        $sources = array_keys($pairs);
+        $order   = array_values(array_diff($order, $sources));
+
+        $pending       = $pairs;
+        $insertedAfter = [];
+        $guard         = 0;
+
+        while (! empty($pending) && $guard++ < 50) {
+            $progressed = false;
+            foreach ($pending as $srcId => $tgtId) {
+                $pos = array_search($tgtId, $order, true);
+                if ($pos === false) continue;
+
+                $offset = $insertedAfter[$tgtId] ?? 0;
+                array_splice($order, $pos + 1 + $offset, 0, [$srcId]);
+                $insertedAfter[$tgtId] = $offset + 1;
+                unset($pending[$srcId]);
+                $progressed = true;
+            }
+            if (! $progressed) break;
+        }
+
+        $unresolved = count($pending);
+        if ($unresolved > 0) {
+            foreach (array_keys($pending) as $srcId) {
+                $order[] = $srcId;
+            }
+        }
+
+        return [$order, $unresolved];
     }
 
     // ─── Persist to DB ────────────────────────────

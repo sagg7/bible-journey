@@ -4,15 +4,20 @@ namespace App\Console\Commands;
 
 use App\Models\ParallelLink;
 use App\Models\StreamPlanNode;
+use App\Services\Harmonization\HarmonizationResolver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * One-time surgical fix for Plan 10: repositions Psalm/Chronicles "literary
- * window" CRS nodes immediately after their approved parallel_links target
- * (the historical event they reference), instead of leaving them grouped at
- * the tail of their sort_key bucket. Does not touch any node that has no
- * approved parallel_link; only the explicitly linked nodes move.
+ * Manual repair tool for a plan compiled before the automatic repositioning
+ * pass existed (see HarmonizationResolver::repositionLinkedLiteraryNodes(),
+ * which now runs this same reordering — via the shared
+ * HarmonizationResolver::reorderByParallelLinks() — on every fresh compile).
+ * Repositions Psalm/Chronicles "literary window" CRS nodes immediately after
+ * their approved parallel_links target (the historical event they
+ * reference), instead of leaving them grouped at the tail of their sort_key
+ * bucket. Does not touch any node that has no approved parallel_link; only
+ * the explicitly linked nodes move.
  *
  * Safe to re-run: idempotent given the same approved links and starting order.
  */
@@ -61,37 +66,10 @@ class FixPsalmChronology extends Command
         $idByCrs = $nodes->keyBy('crs_id');
         $order = $nodes->pluck('crs_id')->toArray();
 
-        $sources = array_keys($pairs);
-        $order = array_values(array_diff($order, $sources));
+        [$order, $unresolved] = HarmonizationResolver::reorderByParallelLinks($order, $pairs);
 
-        $pending = $pairs;
-        $insertedAfter = [];
-        $guard = 0;
-        while (! empty($pending) && $guard++ < 50) {
-            $progressed = false;
-            foreach ($pending as $srcCrsId => $tgtCrsId) {
-                $pos = array_search($tgtCrsId, $order, true);
-                if ($pos === false) {
-                    continue;
-                }
-
-                $offset = $insertedAfter[$tgtCrsId] ?? 0;
-                array_splice($order, $pos + 1 + $offset, 0, [$srcCrsId]);
-                $insertedAfter[$tgtCrsId] = $offset + 1;
-                unset($pending[$srcCrsId]);
-                $progressed = true;
-            }
-
-            if (! $progressed) {
-                break;
-            }
-        }
-
-        if (! empty($pending)) {
-            $this->warn('Could not resolve target position for: ' . implode(', ', array_keys($pending)) . '; appending at end.');
-            foreach (array_keys($pending) as $srcCrsId) {
-                $order[] = $srcCrsId;
-            }
+        if ($unresolved > 0) {
+            $this->warn("Could not resolve target position for {$unresolved} node(s); appended at end.");
         }
 
         $originalSet = $nodes->pluck('crs_id')->sort()->values()->all();
@@ -104,6 +82,7 @@ class FixPsalmChronology extends Command
         $this->newLine();
         $this->info('--- Sample moves (rank before -> after) ---');
         $beforeRank = $nodes->pluck('rank', 'crs_id');
+        $sources = array_keys($pairs);
         $sampleCount = 0;
         foreach ($order as $i => $crsId) {
             $newRank = $i + 1;
