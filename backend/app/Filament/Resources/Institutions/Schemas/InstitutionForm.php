@@ -16,7 +16,12 @@ class InstitutionForm
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')->label('Nombre')->required(),
-                        TextInput::make('seats')->label('Asientos')->numeric()->required()->default(0),
+                        TextInput::make('seats')
+                            ->label('Asientos')
+                            ->numeric()
+                            ->required()
+                            ->minValue(fn () => (int) config('services.stripe_institution_min_seats'))
+                            ->default(fn () => (int) config('services.stripe_institution_min_seats')),
                     ]),
             ]);
     }

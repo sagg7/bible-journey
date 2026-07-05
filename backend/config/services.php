@@ -51,6 +51,8 @@ return [
         'webhook_secret' => env('REVENUECAT_WEBHOOK_SECRET'),
     ],
 
-    'stripe_institution_price_id' => env('STRIPE_INSTITUTION_PRICE_ID'),
+    'stripe_institution_price_id_monthly' => env('STRIPE_INSTITUTION_PRICE_ID_MONTHLY'),
+    'stripe_institution_price_id_annual' => env('STRIPE_INSTITUTION_PRICE_ID_ANNUAL'),
+    'stripe_institution_min_seats' => env('STRIPE_INSTITUTION_MIN_SEATS', 10),
 
 ];
