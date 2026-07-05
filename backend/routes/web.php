@@ -7,7 +7,9 @@ Route::get('/', function () {
     return view('landing');
 });
 
-Route::post('/instituciones', [InstitutionSignupController::class, 'store'])->name('instituciones.store');
+Route::post('/instituciones', [InstitutionSignupController::class, 'store'])
+    ->middleware('throttle:institution-signup')
+    ->name('instituciones.store');
 
 Route::get('/instituciones/gracias', function () {
     return view('instituciones-gracias');
