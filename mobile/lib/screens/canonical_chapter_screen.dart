@@ -6,6 +6,7 @@ import '../core/api.dart';
 import '../core/local_progress.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import '../widgets/bookmark_button.dart';
 import '../widgets/highlight_selection_bar.dart';
 import '../widgets/pinch_zoom_listener.dart';
 import '../widgets/text_zoom_sheet.dart';
@@ -117,6 +118,8 @@ class _CanonicalChapterScreenState
       Color textColor, bool isDark) {
     final theme = Theme.of(context);
     final fontScale = ref.watch(effectiveFontScaleProvider);
+    final fontFamily =
+        ref.watch(localProgressProvider).value?.fontFamily ?? kDefaultScriptureFont;
     final highlights = ref
             .watch(chapterHighlightsProvider((widget.osisCode, _currentChapter)))
             .value ??
@@ -151,6 +154,12 @@ class _CanonicalChapterScreenState
             ],
           ),
           actions: [
+            BookmarkButton.canonical(
+              color: textColor.withValues(alpha: 0.7),
+              label: '${content.bookNameEs} ${content.chapter}',
+              osisCode: widget.osisCode,
+              chapter: content.chapter,
+            ),
             TextZoomButton(color: textColor.withValues(alpha: 0.7)),
             if (content.translationCode != null)
               Padding(
@@ -263,7 +272,9 @@ class _CanonicalChapterScreenState
                             TextSpan(
                               text: v.text,
                               style: scriptureTextStyle(
-                                      fontSize: 17 * fontScale, height: 1.8)
+                                      fontSize: 17 * fontScale,
+                                      height: 1.8,
+                                      fontFamily: fontFamily)
                                   .copyWith(color: textColor),
                             ),
                           ],

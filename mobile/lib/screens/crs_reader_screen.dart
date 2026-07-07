@@ -8,6 +8,7 @@ import '../core/local_progress.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import '../widgets/bookmark_button.dart';
 import '../widgets/highlight_selection_bar.dart';
 import '../widgets/narrative_flow_sheet.dart';
 import '../widgets/pinch_zoom_listener.dart';
@@ -373,6 +374,12 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
         ],
       ),
       actions: [
+        BookmarkButton.crs(
+          color: theme.colorScheme.onSurfaceVariant,
+          label: node.crs.titleEs,
+          planId: widget.planId,
+          nodeId: widget.nodeId,
+        ),
         TextZoomButton(color: theme.colorScheme.onSurfaceVariant),
         if (node.compareGroup != null)
           IconButton(
@@ -478,6 +485,8 @@ class _ScriptureBody extends ConsumerWidget {
 
     final blockAsync = ref.watch(readingBlockProvider(block!.id));
     final fontScale = ref.watch(effectiveFontScaleProvider);
+    final fontFamily =
+        ref.watch(localProgressProvider).value?.fontFamily ?? kDefaultScriptureFont;
 
     return blockAsync.when(
       loading: () => const Padding(
@@ -496,6 +505,13 @@ class _ScriptureBody extends ConsumerWidget {
         final highlights =
             ref.watch(chapterHighlightsProvider((bookOsisCode, chapter))).value ??
                 [];
+        // Most blocks are a single chapter, but some (e.g. a narrative span
+        // covering the end of one chapter and the start of the next) carry
+        // verses from more than one. Show a heading whenever the chapter
+        // changes so it doesn't read as one continuous chapter.
+        final spansMultipleChapters =
+            detail.verses.map((v) => v.chapter).toSet().length > 1;
+        int? lastChapterShown;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -512,14 +528,18 @@ class _ScriptureBody extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(height: 16),
-              ...detail.verses.map((v) {
+              ...detail.verses.expand((v) {
                 final selected = selection.contains(v.verse);
                 final savedHex = highlights
                     .where((h) => h.containsVerse(v.verse))
                     .map((h) => h.color.hex)
                     .firstOrNull;
 
-                return GestureDetector(
+                final showChapterHeading =
+                    spansMultipleChapters && v.chapter != lastChapterShown;
+                if (showChapterHeading) lastChapterShown = v.chapter;
+
+                final verseTile = GestureDetector(
                   onLongPress: () => selection.beginAt(v.verse),
                   onTap: selection.isActive ? () => selection.extendTo(v.verse) : null,
                   child: Container(
@@ -547,7 +567,9 @@ class _ScriptureBody extends ConsumerWidget {
                           TextSpan(
                             text: v.text,
                             style: scriptureTextStyle(
-                                    fontSize: 17 * fontScale, height: 1.8)
+                                    fontSize: 17 * fontScale,
+                                    height: 1.8,
+                                    fontFamily: fontFamily)
                                 .copyWith(color: textColor),
                           ),
                         ],
@@ -555,6 +577,31 @@ class _ScriptureBody extends ConsumerWidget {
                     ),
                   ),
                 );
+
+                if (!showChapterHeading) return [verseTile];
+                return [
+                  Padding(
+                    padding: EdgeInsets.only(top: v.chapter == detail.verses.first.chapter ? 0 : 20, bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(child: Divider(color: textColor.withValues(alpha: 0.15))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'Capítulo ${v.chapter}',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: textColor.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: textColor.withValues(alpha: 0.15))),
+                      ],
+                    ),
+                  ),
+                  verseTile,
+                ];
               }),
               const SizedBox(height: 32),
             ],

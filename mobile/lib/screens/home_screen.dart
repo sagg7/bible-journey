@@ -119,6 +119,12 @@ class HomeScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
               children: [
+                if (progressAsync.valueOrNull?.hasBookmark == true) ...[
+                  BjSectionLabel('Tu marcador'),
+                  const SizedBox(height: 10),
+                  const _BookmarkCard(),
+                  const SizedBox(height: 20),
+                ],
                 BjSectionLabel('Continuar lectura'),
                 const SizedBox(height: 10),
                 _EmptyReadingCard(),
@@ -137,6 +143,13 @@ class HomeScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
             children: [
+              if (progressAsync.valueOrNull?.hasBookmark == true) ...[
+                BjSectionLabel('Tu marcador'),
+                const SizedBox(height: 10),
+                const _BookmarkCard(),
+                const SizedBox(height: 20),
+              ],
+
               BjSectionLabel('Continuar lectura'),
               const SizedBox(height: 10),
               _ContinueReadingCard(planId: plan.id, node: currentNode),
@@ -299,6 +312,63 @@ class _AtmosphericDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white.withValues(alpha: opacity),
+      ),
+    );
+  }
+}
+
+// ─── Bookmark card ────────────────────────────
+//
+// Shows the user's manually-set reading-spot bookmark (see BookmarkButton),
+// separate from "Continuar lectura" which auto-tracks the last chronological
+// node visited. This is the only quick-access resume point for canonical
+// (book-by-book) reading, which otherwise has no "continue" affordance.
+class _BookmarkCard extends ConsumerWidget {
+  const _BookmarkCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final progress = ref.watch(localProgressProvider).value;
+    if (progress == null || !progress.hasBookmark) return const SizedBox.shrink();
+
+    final isCrs = progress.bookmarkType == 'crs';
+    final destination = isCrs
+        ? '/crs/${progress.bookmarkPlanId}/${progress.bookmarkNodeId}'
+        : '/canonical/${progress.bookmarkOsisCode}/${progress.bookmarkChapter}';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: BjColors.accentBronze.withValues(alpha: 0.35), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.bookmark, color: BjColors.accentBronzeLight, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              progress.bookmarkLabel ?? '',
+              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 14),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: () => context.push(destination),
+            // Override the app-wide FilledButton theme, which defaults to
+            // minimumSize: Size(double.infinity, 48) for full-width CTAs —
+            // that forces infinite width when placed inside a Row here.
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text('Ir'),
+          ),
+        ],
       ),
     );
   }

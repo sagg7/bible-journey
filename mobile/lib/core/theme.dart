@@ -336,14 +336,47 @@ ThemeData get editorialLightTheme {
   );
 }
 
-// Alias for reader typography (Editorial Light = serif Lora for scripture text)
-TextStyle scriptureTextStyle({double fontSize = 17, double height = 1.75}) =>
-    GoogleFonts.lora(
-      fontSize: fontSize,
-      height: height,
-      color: BjColors.textPrimaryLight,
-      fontWeight: FontWeight.w400,
-    );
+// ─────────────────────────────────────────────
+// Scripture reading fonts
+// ─────────────────────────────────────────────
+
+/// Font choices offered in the text-display sheet, ordered as shown to the
+/// user. Keys are persisted in [LocalProgress.fontFamily].
+const kScriptureFonts = <String, String>{
+  'lora': 'Lora (serif clásica)',
+  'merriweather': 'Merriweather (serif)',
+  'inter': 'Inter (sans)',
+  'atkinson': 'Atkinson Hyperlegible (alta legibilidad)',
+};
+
+const kDefaultScriptureFont = 'lora';
+
+// Alias for reader typography — font family is user-selectable (see
+// kScriptureFonts); Lora (serif) remains the default to match the Editorial
+// Light visual system.
+TextStyle scriptureTextStyle({
+  double fontSize = 17,
+  double height = 1.75,
+  String fontFamily = kDefaultScriptureFont,
+}) {
+  final base = TextStyle(
+    fontSize: fontSize,
+    height: height,
+    color: BjColors.textPrimaryLight,
+    fontWeight: FontWeight.w400,
+  );
+  switch (fontFamily) {
+    case 'merriweather':
+      return GoogleFonts.merriweather(textStyle: base);
+    case 'inter':
+      return GoogleFonts.inter(textStyle: base);
+    case 'atkinson':
+      return GoogleFonts.atkinsonHyperlegible(textStyle: base);
+    case 'lora':
+    default:
+      return GoogleFonts.lora(textStyle: base);
+  }
+}
 
 TextStyle scriptureVerseStyle() =>
     GoogleFonts.inter(

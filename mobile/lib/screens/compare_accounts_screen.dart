@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api.dart';
+import '../core/local_progress.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -227,6 +228,8 @@ class _AccountTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final fontFamily =
+        ref.watch(localProgressProvider).value?.fontFamily ?? kDefaultScriptureFont;
 
     // Load passage text if available
     final passageAsync = account.hasText
@@ -292,6 +295,7 @@ class _AccountTab extends ConsumerWidget {
                       textColor: textColor,
                       theme: theme,
                       isDark: isDark,
+                      fontFamily: fontFamily,
                     )
                   : _TextUnavailable(
                       isDark: isDark, theme: theme, textColor: textColor),
@@ -321,6 +325,7 @@ class _VersesList extends StatelessWidget {
   final Color textColor;
   final ThemeData theme;
   final bool isDark;
+  final String fontFamily;
 
   const _VersesList({
     required this.verses,
@@ -328,6 +333,7 @@ class _VersesList extends StatelessWidget {
     required this.textColor,
     required this.theme,
     required this.isDark,
+    this.fontFamily = kDefaultScriptureFont,
   });
 
   @override
@@ -362,7 +368,8 @@ class _VersesList extends StatelessWidget {
                     ),
                     TextSpan(
                       text: '${v['t']}',
-                      style: scriptureTextStyle(fontSize: 15, height: 1.75)
+                      style: scriptureTextStyle(
+                              fontSize: 15, height: 1.75, fontFamily: fontFamily)
                           .copyWith(color: textColor),
                     ),
                   ],
