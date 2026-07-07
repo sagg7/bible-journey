@@ -16,6 +16,32 @@ String slugifyEra(String s) => s
     .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
     .replaceAll(RegExp(r'^-+|-+$'), '');
 
+/// Slugs with a matching illustration under assets/images/eras/.
+const _eraImageSlugs = {
+  'los-primeros-tiempos',
+  'los-patriarcas',
+  'exodo-y-desierto',
+  'conquista-y-tiempo-de-los-jueces',
+  'el-surgimiento-de-la-monarquia',
+  'monarquia-unida',
+  'reino-dividido',
+  'la-caida-de-israel',
+  'los-ultimos-reyes-de-juda',
+  'el-exilio',
+  'el-exilio-y-la-esperanza-del-retorno',
+  'el-retorno-y-la-reconstruccion',
+  'el-periodo-intertestamentario',
+  'la-vida-de-jesus',
+  'la-iglesia-primitiva',
+  'las-cartas-y-la-expansion-de-la-iglesia',
+  'cartas-generales-y-apocalipsis',
+};
+
+String? eraImageAsset(String title) {
+  final slug = slugifyEra(title);
+  return _eraImageSlugs.contains(slug) ? 'assets/images/eras/$slug.jpg' : null;
+}
+
 class Era {
   final String title;
   final int sort;
@@ -128,6 +154,7 @@ class _EraCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final imageAsset = eraImageAsset(era.title);
 
     return GestureDetector(
       onTap: () => context.push('/rutas/${slugifyEra(era.title)}', extra: era),
@@ -142,33 +169,53 @@ class _EraCard extends StatelessWidget {
           children: [
             Container(
               height: 110,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          const Color(0xFF1A2A4A),
-                          BjColors.accentPrimary.withValues(alpha: 0.3),
-                          const Color(0xFF0D1830),
-                        ]
-                      : [
-                          const Color(0xFFD4C8A8),
-                          const Color(0xFFE8DFC4),
-                          const Color(0xFFF0E8D0),
-                        ],
-                ),
+                gradient: imageAsset == null
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark
+                            ? [
+                                const Color(0xFF1A2A4A),
+                                BjColors.accentPrimary.withValues(alpha: 0.3),
+                                const Color(0xFF0D1830),
+                              ]
+                            : [
+                                const Color(0xFFD4C8A8),
+                                const Color(0xFFE8DFC4),
+                                const Color(0xFFF0E8D0),
+                              ],
+                      )
+                    : null,
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Positioned(
-                    bottom: 0, left: 0, right: 0,
-                    child: CustomPaint(
-                      size: const Size(double.infinity, 40),
-                      painter: _HillsPainter(isDark: isDark),
+                  if (imageAsset != null)
+                    Image.asset(imageAsset, fit: BoxFit.cover),
+                  if (imageAsset != null)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.black.withValues(alpha: 0.35),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  if (imageAsset == null)
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      child: CustomPaint(
+                        size: const Size(double.infinity, 40),
+                        painter: _HillsPainter(isDark: isDark),
+                      ),
+                    ),
                   Positioned(
                     top: 12, left: 14,
                     child: Container(

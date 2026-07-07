@@ -21,7 +21,27 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   @override
   void initState() {
     super.initState();
-    _offerings = Purchases.getOfferings();
+    _offerings = Purchases.getOfferings()
+        .timeout(const Duration(seconds: 10));
+  }
+
+  String _periodLabel(PackageType type) {
+    switch (type) {
+      case PackageType.annual:
+        return '/año';
+      case PackageType.sixMonth:
+        return '/6 meses';
+      case PackageType.threeMonth:
+        return '/3 meses';
+      case PackageType.twoMonth:
+        return '/2 meses';
+      case PackageType.monthly:
+        return '/mes';
+      case PackageType.weekly:
+        return '/semana';
+      default:
+        return '';
+    }
   }
 
   Future<void> _purchase(Package package) async {
@@ -104,20 +124,35 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                       border: Border.all(color: cs.outline, width: 0.5),
                       color: cs.surfaceContainer,
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      title: Text(
-                        package.storeProduct.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            package.storeProduct.title,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${package.storeProduct.priceString}${_periodLabel(package.packageType)}',
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: _purchasing
+                                ? const Center(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2)))
+                                : FilledButton(
+                                    onPressed: () => _purchase(package),
+                                    child: const Text('Suscribirse'),
+                                  ),
+                          ),
+                        ],
                       ),
-                      subtitle: Text(package.storeProduct.priceString),
-                      trailing: _purchasing
-                          ? const SizedBox(
-                              width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : FilledButton(
-                              onPressed: () => _purchase(package),
-                              child: const Text('Suscribirse'),
-                            ),
                     ),
                   ),
                 ),
