@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/api.dart';
+import 'core/local_progress.dart';
 import 'core/router.dart';
 import 'core/theme.dart';
 
@@ -19,6 +20,16 @@ class BibleJourneyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
+
+    // Al cargar el progreso local guardado, aplica la traducción favorita
+    // del usuario (una sola vez, cuando pasa de "cargando" a datos listos).
+    ref.listen<AsyncValue<LocalProgress>>(localProgressProvider,
+        (previous, next) {
+      final saved = next.value?.translationCode;
+      if (previous is! AsyncData && saved != null) {
+        ref.read(translationProvider.notifier).state = saved;
+      }
+    });
     return MaterialApp.router(
       title: 'Bible Journey',
       debugShowCheckedModeBanner: false,

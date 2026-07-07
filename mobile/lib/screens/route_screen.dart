@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/api.dart';
+import '../core/local_progress.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -199,15 +200,17 @@ class _HistoriaTab extends StatelessWidget {
   }
 }
 
-class _NodeTimelineTile extends StatelessWidget {
+class _NodeTimelineTile extends ConsumerWidget {
   final CrsNodeItem node;
   final int planId;
   final bool isLast;
   const _NodeTimelineTile({required this.node, required this.planId, required this.isLast});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final isDone =
+        ref.watch(localProgressProvider).valueOrNull?.isCompleted(node.id) ?? false;
 
     return IntrinsicHeight(
       child: Row(
@@ -223,9 +226,14 @@ class _NodeTimelineTile extends StatelessWidget {
                   margin: const EdgeInsets.only(top: 14, left: 7),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: BjColors.accentPrimary.withValues(alpha: 0.2),
+                    color: isDone
+                        ? BjColors.accentPrimary
+                        : BjColors.accentPrimary.withValues(alpha: 0.2),
                     border: Border.all(color: BjColors.accentPrimary, width: 1.5),
                   ),
+                  child: isDone
+                      ? const Icon(Icons.check, size: 10, color: Colors.white)
+                      : null,
                 ),
                 if (!isLast)
                   Expanded(
@@ -274,13 +282,13 @@ class _NodeTimelineTile extends StatelessWidget {
 
 // ─── Línea de tiempo tab ──────────────────────
 
-class _LineaDeTiempoTab extends StatelessWidget {
+class _LineaDeTiempoTab extends ConsumerWidget {
   final List<CrsNodeItem> nodes;
   final int? planId;
   const _LineaDeTiempoTab({required this.nodes, required this.planId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
@@ -299,6 +307,8 @@ class _LineaDeTiempoTab extends StatelessWidget {
         itemBuilder: (context, i) {
           final n = nodes[i];
           final isLast = i == nodes.length - 1;
+          final isDone =
+              ref.watch(localProgressProvider).valueOrNull?.isCompleted(n.id) ?? false;
           return IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,10 +334,13 @@ class _LineaDeTiempoTab extends StatelessWidget {
                       width: 10,
                       height: 10,
                       margin: const EdgeInsets.only(top: 4),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: BjColors.accentPrimary,
                       ),
+                      child: isDone
+                          ? const Icon(Icons.check, size: 8, color: Colors.white)
+                          : null,
                     ),
                     if (!isLast)
                       Expanded(

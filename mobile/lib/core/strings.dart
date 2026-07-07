@@ -91,7 +91,7 @@ class AppStrings {
       'es': 'Este acontecimiento tiene lecturas relacionadas pendientes:',
       'en': 'This event has pending related readings:'
     },
-    'continuarLaHistoria': {'es': 'Continuar la historia', 'en': 'Continue the story'},
+    'continuarLaHistoria': {'es': 'Marcar como leído y continuar', 'en': 'Mark as read and continue'},
     'leerRelatosRelacionadosAhora': {
       'es': 'Leer relatos relacionados ahora',
       'en': 'Read related accounts now'

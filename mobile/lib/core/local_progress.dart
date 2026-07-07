@@ -116,3 +116,15 @@ final localProgressProvider =
     AsyncNotifierProvider<LocalProgressNotifier, LocalProgress>(
   LocalProgressNotifier.new,
 );
+
+/// Valor temporal de fontScale mientras el usuario hace el gesto de
+/// pellizco; null cuando no hay gesto de pellizco activo.
+final pinchFontScaleProvider = StateProvider<double?>((ref) => null);
+
+/// fontScale a usar para renderizar el texto de lectura: el valor en vivo
+/// del pellizco si hay uno activo, si no el valor persistido.
+final effectiveFontScaleProvider = Provider<double>((ref) {
+  final live = ref.watch(pinchFontScaleProvider);
+  if (live != null) return live;
+  return ref.watch(localProgressProvider).value?.fontScale ?? 1.0;
+});

@@ -8,6 +8,8 @@ import '../core/auth.dart';
 import '../core/local_progress.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import '../widgets/study_mode_sheet.dart';
+import 'routes_list_screen.dart' show buildEras, slugifyEra;
 
 /// Shared language toggle for the AppBar.
 class LanguageToggle extends ConsumerWidget {
@@ -146,6 +148,11 @@ class HomeScreen extends ConsumerWidget {
                 planTitle: 'Plan cronológico',
                 totalMainNodes: mainNodes.length,
               ),
+              const SizedBox(height: 20),
+
+              BjSectionLabel('Tu lugar en la historia'),
+              const SizedBox(height: 10),
+              _HistoricalTimelineCard(planId: plan.id, nodes: plan.nodes),
               const SizedBox(height: 20),
 
               BjSectionLabel('Sigue explorando'),
@@ -437,6 +444,144 @@ class _RouteProgressCard extends ConsumerWidget {
   }
 }
 
+// ─── Historical timeline card ─────────────────
+//
+// A horizontal, era-by-era strip of the whole chronological plan. It doesn't
+// assert exact years (many biblical dates are genuinely debated — see the
+// `placement_confidence` field the backend already tracks per era), but the
+// era order itself already *is* the approximate historical placement, so
+// showing eras in sequence with fill-in progress gives the user a real sense
+// of "where am I in history" without inventing disputed dates.
+class _HistoricalTimelineCard extends ConsumerWidget {
+  final int planId;
+  final List<CrsNodeItem> nodes;
+  const _HistoricalTimelineCard({required this.planId, required this.nodes});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final eras = buildEras(nodes);
+    if (eras.isEmpty) return const SizedBox.shrink();
+
+    final completed = ref.watch(localProgressProvider).valueOrNull?.completedBlockIds ??
+        const <int>{};
+    final lastNodeId = ref.watch(localProgressProvider).valueOrNull?.lastNodeId;
+
+    return SizedBox(
+      height: 108,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        itemCount: eras.length,
+        itemBuilder: (context, i) {
+          final era = eras[i];
+          final total = era.nodes.length;
+          final done = era.nodes.where((n) => completed.contains(n.id)).length;
+          final fraction = total > 0 ? done / total : 0.0;
+          final isCurrent = era.nodes.any((n) => n.id == lastNodeId);
+          final isLast = i == eras.length - 1;
+
+          return GestureDetector(
+            onTap: () => context.push('/rutas/${slugifyEra(era.title)}', extra: era),
+            child: SizedBox(
+              width: 96,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: i == 0
+                            ? const SizedBox()
+                            : Container(height: 2, color: cs.outline.withValues(alpha: 0.35)),
+                      ),
+                      _EraProgressDot(fraction: fraction, isCurrent: isCurrent),
+                      Expanded(
+                        child: isLast
+                            ? const SizedBox()
+                            : Container(height: 2, color: cs.outline.withValues(alpha: 0.35)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    era.title,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: isCurrent
+                          ? BjColors.accentPrimary
+                          : textColor.withValues(alpha: 0.6),
+                      fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  if (fraction > 0) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '$done/$total',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: textColor.withValues(alpha: 0.4),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EraProgressDot extends StatelessWidget {
+  final double fraction;
+  final bool isCurrent;
+  const _EraProgressDot({required this.fraction, required this.isCurrent});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final complete = fraction >= 1.0;
+    return SizedBox(
+      width: 26,
+      height: 26,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 26,
+            height: 26,
+            child: CircularProgressIndicator(
+              value: fraction == 0 ? 1.0 : fraction,
+              strokeWidth: 2.5,
+              backgroundColor: fraction == 0 ? cs.outline.withValues(alpha: 0.3) : null,
+              valueColor: AlwaysStoppedAnimation(
+                fraction == 0 ? Colors.transparent : BjColors.accentPrimary,
+              ),
+            ),
+          ),
+          if (complete)
+            Icon(Icons.check, size: 14, color: BjColors.accentPrimary)
+          else
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCurrent ? BjColors.accentPrimary : cs.outline,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProgressRow extends StatelessWidget {
   final String label;
   final double value;
@@ -512,13 +657,19 @@ class _ProgressSkeleton extends StatelessWidget {
 
 // ─── "Keep exploring" card ─────────────────────
 
-class _ConnectionCard extends StatelessWidget {
+class _ConnectionCard extends ConsumerWidget {
   final int planId;
   final CrsNodeItem node;
   const _ConnectionCard({required this.planId, required this.node});
 
+  Future<void> _openStudyMode(BuildContext context, WidgetRef ref) async {
+    final freshNode = await ref.read(apiProvider).crsNode(planId, node.id);
+    if (!context.mounted) return;
+    await showStudyModeSheet(context, node: freshNode, planId: planId);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -554,7 +705,7 @@ class _ConnectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: () => context.push('/crs/$planId/${node.id}'),
+            onTap: () => _openStudyMode(context, ref),
             child: Text(
               'Explorar →',
               style: TextStyle(

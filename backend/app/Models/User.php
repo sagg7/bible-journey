@@ -64,6 +64,10 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasPremiumAccess(): bool
     {
+        if ($this->has_test_access) {
+            return true;
+        }
+
         if ($this->institution_id && $this->institution?->subscribed('default')) {
             return true;
         }

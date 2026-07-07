@@ -10,6 +10,7 @@ import '../core/theme.dart';
 import '../models/models.dart';
 import '../widgets/highlight_selection_bar.dart';
 import '../widgets/narrative_flow_sheet.dart';
+import '../widgets/pinch_zoom_listener.dart';
 import '../widgets/study_mode_sheet.dart';
 import '../widgets/text_zoom_sheet.dart';
 
@@ -67,13 +68,16 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
 
   void _toggleFocus() => setState(() => _focusMode = !_focusMode);
 
-  void _swipeTo(BuildContext context, int nodeId) {
+  void _swipeTo(BuildContext context, int nodeId, {CrsNodeDetail? completingNode}) {
     _selection.clear();
+    // Swiping forward is how most users actually move to the next chapter —
+    // not everyone taps the "Continuar" button — so it must mark the chapter
+    // just swiped away from as read too, same as the button does.
+    if (completingNode != null) _markCompleted(completingNode);
     context.replace('/crs/${widget.planId}/$nodeId');
   }
 
-  Future<void> _handleContinue(
-      BuildContext context, CrsNodeDetail node, AppStrings s) async {
+  Future<void> _markCompleted(CrsNodeDetail node) async {
     final anchor = primaryBlock(node);
     if (anchor == null) return;
 
@@ -86,6 +90,14 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
         ref.invalidate(progressSummaryProvider);
       } catch (_) {}
     }
+  }
+
+  Future<void> _handleContinue(
+      BuildContext context, CrsNodeDetail node, AppStrings s) async {
+    final anchor = primaryBlock(node);
+    if (anchor == null) return;
+
+    await _markCompleted(node);
 
     if (!context.mounted) return;
 
@@ -94,7 +106,9 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
       final freshNode = await ref.read(apiProvider).crsNode(widget.planId, node.nodeId);
       if (!context.mounted) return;
       await showNarrativeFlowSheet(context, node: freshNode, planId: widget.planId);
-      if (token != null && context.mounted) ref.invalidate(progressSummaryProvider);
+      if (ref.read(authProvider) != null && context.mounted) {
+        ref.invalidate(progressSummaryProvider);
+      }
     } else {
       final neighbors = ref.read(neighborNodesProvider((widget.planId, widget.nodeId)));
       if (neighbors.nextId != null && context.mounted) {
@@ -191,7 +205,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
         if (v > 300 && neighbors.prevId != null) {
           _swipeTo(context, neighbors.prevId!);
         } else if (v < -300 && neighbors.nextId != null) {
-          _swipeTo(context, neighbors.nextId!);
+          _swipeTo(context, neighbors.nextId!, completingNode: node);
         }
       },
       child: Scaffold(
@@ -201,7 +215,8 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
             : _buildAppBar(context, node, s, isDark, anchor?.displayReference),
         body: Stack(
           children: [
-            CustomScrollView(
+            PinchZoomListener(
+              child: CustomScrollView(
               controller: _scroll,
               slivers: [
                 // Focus mode minimal header
@@ -294,6 +309,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
 
                 const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
+              ),
             ),
 
             // Focus toggle button
@@ -369,6 +385,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
             final code = await context.push<String>('/traducciones');
             if (code != null) {
               ref.read(translationProvider.notifier).state = code;
+              ref.read(localProgressProvider.notifier).setTranslation(code);
             }
           },
           style: TextButton.styleFrom(
@@ -460,7 +477,7 @@ class _ScriptureBody extends ConsumerWidget {
     }
 
     final blockAsync = ref.watch(readingBlockProvider(block!.id));
-    final fontScale = ref.watch(localProgressProvider).value?.fontScale ?? 1.0;
+    final fontScale = ref.watch(effectiveFontScaleProvider);
 
     return blockAsync.when(
       loading: () => const Padding(

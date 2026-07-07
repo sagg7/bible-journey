@@ -7,6 +7,7 @@ import '../core/local_progress.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
 import '../widgets/highlight_selection_bar.dart';
+import '../widgets/pinch_zoom_listener.dart';
 import '../widgets/text_zoom_sheet.dart';
 
 class CanonicalChapterScreen extends ConsumerStatefulWidget {
@@ -115,12 +116,13 @@ class _CanonicalChapterScreenState
   Widget _buildContent(BuildContext context, CanonicalChapterContent content,
       Color textColor, bool isDark) {
     final theme = Theme.of(context);
-    final fontScale = ref.watch(localProgressProvider).value?.fontScale ?? 1.0;
+    final fontScale = ref.watch(effectiveFontScaleProvider);
     final highlights = ref
             .watch(chapterHighlightsProvider((widget.osisCode, _currentChapter)))
             .value ??
         [];
-    return CustomScrollView(
+    return PinchZoomListener(
+      child: CustomScrollView(
       slivers: [
         SliverAppBar(
           backgroundColor:
@@ -159,6 +161,7 @@ class _CanonicalChapterScreenState
                       final code = await context.push<String>('/traducciones');
                       if (code != null) {
                         ref.read(translationProvider.notifier).state = code;
+                        ref.read(localProgressProvider.notifier).setTranslation(code);
                       }
                     },
                     style: TextButton.styleFrom(
@@ -286,6 +289,7 @@ class _CanonicalChapterScreenState
 
         const SliverToBoxAdapter(child: SizedBox(height: 48)),
       ],
+      ),
     );
   }
 }
