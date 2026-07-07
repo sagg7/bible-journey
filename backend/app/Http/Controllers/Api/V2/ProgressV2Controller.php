@@ -29,11 +29,16 @@ class ProgressV2Controller extends Controller
         $user   = $request->user();
 
         DB::transaction(function () use ($user, $block, $planId, $status) {
+            $existing = UserCanonicalProgress::where('user_id', $user->id)
+                ->where('block_id', $block->id)
+                ->where('plan_id', $planId)
+                ->first();
+
             $progress = UserCanonicalProgress::updateOrCreate(
                 ['user_id' => $user->id, 'block_id' => $block->id, 'plan_id' => $planId],
                 [
                     'status'       => $status,
-                    'started_at'   => DB::raw('COALESCE(started_at, NOW())'),
+                    'started_at'   => $existing->started_at ?? now(),
                     'completed_at' => $status === 'completed' ? now() : null,
                 ]
             );
@@ -134,19 +139,29 @@ class ProgressV2Controller extends Controller
                 $relatedBlocks = $crs->blocks->where('role', '!=', 'narrative_anchor');
 
                 foreach ($relatedBlocks as $block) {
+                    $existingBlock = UserCanonicalProgress::where('user_id', $user->id)
+                        ->where('block_id', $block->id)
+                        ->where('plan_id', $planId)
+                        ->first();
+
                     UserCanonicalProgress::updateOrCreate(
                         ['user_id' => $user->id, 'block_id' => $block->id, 'plan_id' => $planId],
-                        ['status' => 'deferred', 'started_at' => DB::raw('COALESCE(started_at, NOW())')]
+                        ['status' => 'deferred', 'started_at' => $existingBlock->started_at ?? now()]
                     );
                 }
             }
 
+            $existingEvent = UserEventProgress::where('user_id', $user->id)
+                ->where('node_id', $node->id)
+                ->where('plan_id', $planId)
+                ->first();
+
             UserEventProgress::updateOrCreate(
                 ['user_id' => $user->id, 'node_id' => $node->id, 'plan_id' => $planId],
                 [
-                    'state'               => $state,
-                    'started_at'          => DB::raw('COALESCE(started_at, NOW())'),
-                    'primary_completed_at'=> DB::raw('COALESCE(primary_completed_at, NOW())'),
+                    'state'                => $state,
+                    'started_at'           => $existingEvent->started_at ?? now(),
+                    'primary_completed_at' => $existingEvent->primary_completed_at ?? now(),
                 ]
             );
         });
@@ -182,14 +197,19 @@ class ProgressV2Controller extends Controller
             $state = 'in_progress';
         }
 
+        $existingEvent = UserEventProgress::where('user_id', $userId)
+            ->where('node_id', $node->id)
+            ->where('plan_id', $planId)
+            ->first();
+
         UserEventProgress::updateOrCreate(
             ['user_id' => $userId, 'node_id' => $node->id, 'plan_id' => $planId],
             [
                 'state'                => $state,
                 'pending_block_count'  => $pendingCount,
-                'started_at'           => DB::raw('COALESCE(started_at, NOW())'),
-                'primary_completed_at' => $anchorDone ? DB::raw('COALESCE(primary_completed_at, NOW())') : null,
-                'completed_at'         => $allDone ? DB::raw('COALESCE(completed_at, NOW())') : null,
+                'started_at'           => $existingEvent->started_at ?? now(),
+                'primary_completed_at' => $anchorDone ? ($existingEvent->primary_completed_at ?? now()) : null,
+                'completed_at'         => $allDone ? ($existingEvent->completed_at ?? now()) : null,
             ]
         );
     }
