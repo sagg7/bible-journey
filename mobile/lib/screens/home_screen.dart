@@ -31,13 +31,10 @@ class LanguageToggle extends ConsumerWidget {
 }
 
 /// Returns the main-stream nodes ordered the same way the "Leer" tab does
-/// (by user_facing_era_sort, then rank).
+/// (by canonical stream rank).
 List<CrsNodeItem> _orderedMainNodes(List<CrsNodeItem> nodes) {
   final mainNodes = nodes.where((n) => n.isMainStreamNode).toList()
     ..sort((a, b) {
-      final esA = a.userFacingEraSort ?? 999;
-      final esB = b.userFacingEraSort ?? 999;
-      if (esA != esB) return esA.compareTo(esB);
       return a.rank.compareTo(b.rank);
     });
   return mainNodes;

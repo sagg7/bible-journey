@@ -152,8 +152,13 @@ class ApiClient {
 
   Future<CrsNodeDetail> crsNode(int planId, int nodeId) async {
     try {
+      final q = _q()
+        ..addAll({
+          'audio_translation': 'NVI',
+          'audio_voice': 'Charon',
+        });
       final r = await _dio.get('/v2/stream-plans/$planId/nodes/$nodeId',
-          queryParameters: {'locale': ref.read(localeProvider)});
+          queryParameters: q);
       return CrsNodeDetail.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -228,7 +233,11 @@ class ApiClient {
     try {
       final translation = ref.read(translationProvider) ?? 'RVA1909';
       final r = await _dio.get('/readings/$blockId',
-          queryParameters: {'translation': translation});
+          queryParameters: {
+            'translation': translation,
+            'audio_translation': 'NVI',
+            'audio_voice': 'Charon',
+          });
       return ReadingBlockDetail.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -396,9 +405,6 @@ final neighborNodesProvider =
     data: (plan) {
       final mainNodes = plan.nodes.where((n) => n.isMainStreamNode).toList()
         ..sort((a, b) {
-          final esA = a.userFacingEraSort ?? 999;
-          final esB = b.userFacingEraSort ?? 999;
-          if (esA != esB) return esA.compareTo(esB);
           return a.rank.compareTo(b.rank);
         });
       final idx = mainNodes.indexWhere((n) => n.id == nodeId);

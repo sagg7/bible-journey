@@ -82,6 +82,7 @@ class BuildCrsStudyContent extends Command
         $summary = "{$crs->title_es} reune {$referenceText} dentro de la secuencia cronologica.";
         $context = $crs->narrative_flow_message_es
             ?: "Este bloque pertenece a {$era}. Su lugar editorial se basa en la referencia {$crs->source_map} y en una confianza de ubicacion marcada como {$crs->placement_confidence}.";
+        $context = $this->readerContextFor($crs, $context);
 
         return [
             'summary_es' => $summary,
@@ -90,8 +91,111 @@ class BuildCrsStudyContent extends Command
             'places' => $this->detectPlaces($crs),
             'connections' => $this->connectionsFor($crs),
             'sources' => array_map(fn ($ref) => ['label' => $ref], $references),
-            'content_version' => 'auto-v1',
+            'content_version' => 'auto-v2',
         ];
+    }
+
+    private function readerContextFor(ChronologicalReadingSet $crs, string $default): string
+    {
+        $map = $crs->source_map;
+
+        if (in_array($map, ['CRS-NT-013', 'CRS-PAUL-GAL'], true)) {
+            return 'Ubicacion debatida: Galatas se coloca junto a la mision temprana de Pablo y la controversia que lleva al concilio de Jerusalen. Esta lectura ayuda a seguir la evolucion de Pablo, pero no pretende cerrar todas las propuestas sobre la fecha de la carta.';
+        }
+
+        if (in_array($map, ['CRS-NT-020', 'CRS-NT-021', 'CRS-PAUL-1TES', 'CRS-PAUL-2TES'], true)) {
+            return 'Ubicacion probable: estas cartas se leen junto a la etapa de Corinto en la segunda mision de Pablo. La fecha exacta se mantiene como inferencia editorial, pero el lugar en la secuencia permite ver sus primeras preocupaciones pastorales.';
+        }
+
+        if (in_array($map, ['CRS-NT-024', 'CRS-PAUL-1COR-A', 'CRS-PAUL-1COR-B', 'CRS-PAUL-1COR-C'], true)) {
+            return 'Ubicacion probable: 1 Corintios se coloca durante la etapa de Efeso, cuando Pablo responde a divisiones, preguntas practicas y desorden en una iglesia joven. El orden busca seguir la historia de la mision sin convertir cada detalle en una fecha absoluta.';
+        }
+
+        if ($map === 'CRS-NT-026') {
+            return 'Ubicacion probable: 2 Corintios se lee despues de la crisis en Efeso y durante la etapa de Macedonia, donde se ve a Pablo defender su ministerio con mayor madurez y vulnerabilidad.';
+        }
+
+        if ($map === 'CRS-NT-028') {
+            return 'Ubicacion probable: Romanos se coloca en la etapa de Grecia o Acaya, antes del viaje de Pablo a Jerusalen. Asi se lee como una sintesis madura del evangelio despues de anos de mision entre judios y gentiles.';
+        }
+
+        if (in_array($map, ['CRS-NT-034', 'CRS-NT-035', 'CRS-NT-036', 'CRS-NT-037'], true)) {
+            return 'Ubicacion probable: esta carta se lee dentro del periodo de cautiverio de Pablo, vinculado tradicionalmente con Roma. La secuencia permite ver como su teologia y cuidado pastoral avanzan aun desde la prision.';
+        }
+
+        if (in_array($map, ['CRS-NT-038', 'CRS-NT-039', 'CRS-NT-040'], true)) {
+            return 'Ubicacion aproximada: estas cartas pastorales se ubican al final del recorrido de Pablo porque reflejan una etapa de organizacion, legado y encargo ministerial. Su detalle historico posterior a Hechos se lee con cautela.';
+        }
+
+        if (str_starts_with($map, 'CRS-PAUL-')) {
+            return 'Ubicacion probable dentro de los viajes de Pablo: la carta se coloca junto al tramo de Hechos que mejor explica su situacion, sus destinatarios y su desarrollo pastoral. La fecha exacta sigue siendo una decision editorial cautelosa.';
+        }
+
+        if ($this->isHebrews($crs)) {
+            return 'Ubicacion aproximada: Hebreos no nombra autor ni da un ancla segura dentro de Hechos. Se lee aqui por su relacion con la fe, el sacerdocio de Cristo y la perseverancia de las comunidades cristianas.';
+        }
+
+        if ($this->isJames($crs)) {
+            return 'Ubicacion debatida: Santiago se coloca temprano para leerlo junto a las primeras comunidades judeocristianas. La fecha de composicion y su relacion exacta con Hechos no estan cerradas.';
+        }
+
+        if ($this->isPetrineLetter($crs)) {
+            return 'Ubicacion aproximada: la fecha de composicion es debatida. La carta se coloca con las cartas generales para leer su exhortacion a comunidades bajo presion sin afirmar un punto exacto de Hechos.';
+        }
+
+        if ($this->isJohannineLetter($crs)) {
+            return 'Ubicacion aproximada: estas cartas se ordenan por su relacion con la tradicion joanica y la vida de comunidades cristianas maduras. Su secuencia es literaria y pastoral mas que una cronologia exacta de eventos.';
+        }
+
+        if ($this->isJude($crs)) {
+            return 'Ubicacion debatida: Judas se lee con las cartas generales tardias por su afinidad tematica con la defensa de la fe apostolica. La fecha exacta de composicion no se presenta como segura.';
+        }
+
+        if (str_starts_with($map, 'CRS-GLET-')) {
+            return 'Ubicacion aproximada: la fecha de composicion es debatida. Esta carta se coloca aqui para acompanar el desarrollo de la iglesia primitiva y sus desafios pastorales, no como una fecha absoluta.';
+        }
+
+        if (str_starts_with($map, 'CRS-REV-')) {
+            return 'Apocalipsis se lee como una secuencia literaria de visiones, no como una linea cronologica directa de eventos mundiales. Su ubicacion final ayuda a cerrar la historia biblica con el testimonio de Jesus y la esperanza de la nueva creacion.';
+        }
+
+        return $default;
+    }
+
+    private function isHebrews(ChronologicalReadingSet $crs): bool
+    {
+        $map = $crs->source_map;
+
+        return str_starts_with($map, 'CRS-GLET-HEB-')
+            || in_array($map, ['CRS-GLET-001', 'CRS-GLET-002', 'CRS-GLET-003', 'CRS-GLET-004', 'CRS-GLET-005'], true)
+            || $this->hasReferencePrefix($crs, 'Hebreos');
+    }
+
+    private function isJames(ChronologicalReadingSet $crs): bool
+    {
+        return in_array($crs->source_map, ['CRS-GLET-STG', 'CRS-GLET-006', 'CRS-GLET-007'], true)
+            || $this->hasReferencePrefix($crs, 'Santiago');
+    }
+
+    private function isPetrineLetter(ChronologicalReadingSet $crs): bool
+    {
+        return in_array($crs->source_map, ['CRS-GLET-1PE', 'CRS-GLET-2PE', 'CRS-GLET-008', 'CRS-GLET-009', 'CRS-GLET-010'], true)
+            || $this->hasReferencePrefix($crs, '1 Pedro')
+            || $this->hasReferencePrefix($crs, '2 Pedro');
+    }
+
+    private function isJohannineLetter(ChronologicalReadingSet $crs): bool
+    {
+        return in_array($crs->source_map, ['CRS-GLET-1JN', 'CRS-GLET-2JN', 'CRS-GLET-3JN', 'CRS-GLET-011', 'CRS-GLET-012', 'CRS-GLET-013', 'CRS-GLET-014'], true)
+            || $this->hasReferencePrefix($crs, '1 Juan')
+            || $this->hasReferencePrefix($crs, '2 Juan')
+            || $this->hasReferencePrefix($crs, '3 Juan');
+    }
+
+    private function isJude(ChronologicalReadingSet $crs): bool
+    {
+        return in_array($crs->source_map, ['CRS-GLET-JDS', 'CRS-GLET-015'], true)
+            || $this->hasReferencePrefix($crs, 'Judas');
     }
 
     private function detectPeople(ChronologicalReadingSet $crs): array

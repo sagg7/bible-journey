@@ -29,7 +29,6 @@ class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
     'Contexto',
     'Personas',
     'Conexiones',
-    'Espíritu de Profecía',
     'Notas',
   ];
 
@@ -155,7 +154,6 @@ class _StudyModeSheetState extends ConsumerState<StudyModeSheet>
                   s: s,
                   isDark: isDark,
                 ),
-                _EspirituDeProfeciaTab(node: widget.node, isDark: isDark),
                 _NotasTab(nodeId: widget.node.nodeId, s: s, isDark: isDark),
               ],
             ),
@@ -315,6 +313,16 @@ class _ContextoTab extends ConsumerWidget {
     final textColor = isDark
         ? BjColors.textPrimaryDark
         : BjColors.textPrimaryLight;
+    final contextEs = node.studyContent.contextEs?.trim();
+    final flowMessage = node.crs.narrativeFlowMessage?.trim();
+    final editorialNote = node.crs.editorialNote?.trim();
+    final historicalNotes = [
+      if (contextEs != null && contextEs.isNotEmpty)
+        contextEs
+      else if (flowMessage != null && flowMessage.isNotEmpty)
+        flowMessage,
+      if (editorialNote != null && editorialNote.isNotEmpty) editorialNote,
+    ].join('\n\n');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -369,6 +377,19 @@ class _ContextoTab extends ConsumerWidget {
             ),
           ),
 
+          if (historicalNotes.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            BjSectionLabel('DATOS HISTÓRICOS Y COMENTARIOS'),
+            const SizedBox(height: 8),
+            Text(
+              historicalNotes,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: textColor,
+                height: 1.6,
+              ),
+            ),
+          ],
+
           if (node.studyContent.places.isNotEmpty) ...[
             const SizedBox(height: 20),
             BjSectionLabel(s.t('lugar').toUpperCase()),
@@ -422,6 +443,13 @@ class _ContextoTab extends ConsumerWidget {
               ),
             ),
           ],
+
+          _SpiritOfProphecyContextSection(
+            node: node,
+            textColor: textColor,
+            isDark: isDark,
+            theme: theme,
+          ),
 
           const SizedBox(height: 20),
           Divider(color: textColor.withValues(alpha: 0.08)),
@@ -693,104 +721,95 @@ class _ConexionesTab extends StatelessWidget {
   }
 }
 
-// ─── Tab: Espíritu de Profecía ─────────────────────────────────────────────────
-
-class _EspirituDeProfeciaTab extends StatelessWidget {
+class _SpiritOfProphecyContextSection extends StatelessWidget {
   final CrsNodeDetail node;
+  final Color textColor;
   final bool isDark;
+  final ThemeData theme;
 
-  const _EspirituDeProfeciaTab({required this.node, required this.isDark});
+  const _SpiritOfProphecyContextSection({
+    required this.node,
+    required this.textColor,
+    required this.isDark,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textColor = isDark
-        ? BjColors.textPrimaryDark
-        : BjColors.textPrimaryLight;
     final sop = node.spiritOfProphecy;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          BjSectionLabel('ESPÍRITU DE PROFECÍA'),
+    if (sop.excerpts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final sourceBookTitle = sop.sourceBookTitle?.trim();
+    final copyright = sop.copyright?.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Divider(color: textColor.withValues(alpha: 0.08)),
+        const SizedBox(height: 16),
+        BjSectionLabel('COMENTARIOS BÍBLICOS Y ESPÍRITU DE PROFECÍA'),
+        if (sourceBookTitle != null && sourceBookTitle.isNotEmpty) ...[
           const SizedBox(height: 4),
-          if (sop.sourceBookTitle != null)
-            Text(
-              sop.sourceBookTitle!,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: textColor.withValues(alpha: 0.55),
-                fontStyle: FontStyle.italic,
+          Text(
+            sourceBookTitle,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: textColor.withValues(alpha: 0.55),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        ...sop.excerpts.map(
+          (excerpt) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? BjColors.surfaceCard : const Color(0xFFF0EDE8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border(
+                left: BorderSide(color: BjColors.accentBronze, width: 3),
               ),
             ),
-          const SizedBox(height: 14),
-          if (sop.excerpts.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isDark ? BjColors.surfaceCard : const Color(0xFFF0EDE8),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'No hay referencias del Espíritu de Profecía para este pasaje.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: textColor.withValues(alpha: 0.6),
-                  height: 1.5,
-                ),
-              ),
-            )
-          else
-            ...sop.excerpts.map(
-              (excerpt) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? BjColors.surfaceCard
-                      : const Color(0xFFF0EDE8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border(
-                    left: BorderSide(color: BjColors.accentBronze, width: 3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '"${excerpt.snippet}"',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: textColor,
+                    height: 1.6,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '"${excerpt.snippet}"',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: textColor,
-                        height: 1.6,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      excerpt.refcodeLong.isNotEmpty
-                          ? excerpt.refcodeLong
-                          : excerpt.refcodeShort,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: BjColors.accentBronze,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 8),
+                Text(
+                  excerpt.refcodeLong.isNotEmpty
+                      ? excerpt.refcodeLong
+                      : excerpt.refcodeShort,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: BjColors.accentBronze,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
+              ],
             ),
-          if (sop.excerpts.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              sop.copyright ?? '© Ellen G. White Estate',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: textColor.withValues(alpha: 0.4),
-                fontSize: 10,
-              ),
+          ),
+        ),
+        if (copyright != null && copyright.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            copyright,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: textColor.withValues(alpha: 0.4),
+              fontSize: 10,
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

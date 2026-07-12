@@ -183,6 +183,10 @@ class HarmonizationResolver
         // run by hand against Plan 10 — makes every future compile self-correcting instead
         // of depending on that manual step.
         $ordered = $this->repositionLinkedLiteraryNodes($ordered, $nodes);
+        $ordered = self::normalizeChronologicalReadingOrder(
+            $ordered,
+            array_column($nodes, 'crs_id', 'source_map')
+        );
 
         // Assign ranks
         foreach ($ordered as $rank => $nodeId) {
@@ -576,6 +580,159 @@ class HarmonizationResolver
     }
 
     // ─── Persist to DB ────────────────────────────
+
+    public static function normalizeChronologicalReadingOrder(array $order, array $sourceToCrs): array
+    {
+        $moveAfter = function (array $order, string $anchorSource, array $sequence) use ($sourceToCrs): array {
+            $anchorId = $sourceToCrs[$anchorSource] ?? null;
+            if (! $anchorId) {
+                return $order;
+            }
+
+            $sequenceIds = [];
+            foreach ($sequence as $source) {
+                if (isset($sourceToCrs[$source])) {
+                    $sequenceIds[] = $sourceToCrs[$source];
+                }
+            }
+
+            if (empty($sequenceIds)) {
+                return $order;
+            }
+
+            $order = array_values(array_diff($order, $sequenceIds));
+            $anchorPos = array_search($anchorId, $order, true);
+            if ($anchorPos === false) {
+                return array_merge($order, $sequenceIds);
+            }
+
+            array_splice($order, $anchorPos + 1, 0, $sequenceIds);
+            return $order;
+        };
+
+        $order = $moveAfter($order, 'CRS-DEU-008', [
+            'CRS-PSA-027',
+        ]);
+
+        $order = $moveAfter($order, 'CRS-1SA-009', [
+            'CRS-PSA-020',
+        ]);
+
+        $order = $moveAfter($order, 'CRS-1SA-011', [
+            'CRS-PSA-010',
+            'CRS-PSA-017',
+        ]);
+
+        $order = $moveAfter($order, 'CRS-1SA-012', [
+            'CRS-PSA-013',
+        ]);
+
+        $order = $moveAfter($order, 'CRS-1SA-013', [
+            'CRS-PSA-015',
+        ]);
+
+        $order = $moveAfter($order, 'CRS-1SA-014', [
+            'CRS-PSA-018',
+        ]);
+
+        $order = $moveAfter($order, 'CRS-07-090', [
+            'CRS-ACT-001',
+            'CRS-ACT-002',
+            'CRS-ACT-003',
+            'CRS-ACT-004',
+            'CRS-ACT-005',
+            'CRS-ACT-006',
+            'CRS-ACT-007',
+            'CRS-ACT-008',
+            'CRS-NT-001',
+            'CRS-NT-002',
+            'CRS-NT-003',
+            'CRS-NT-004',
+            'CRS-NT-005',
+            'CRS-NT-006',
+            'CRS-NT-007',
+            'CRS-NT-008',
+            'CRS-NT-009',
+            'CRS-NT-010',
+            'CRS-NT-011',
+            'CRS-NT-012',
+            'CRS-NT-013',
+            'CRS-PAUL-GAL',
+            'CRS-GLET-STG',
+            'CRS-GLET-006',
+            'CRS-GLET-007',
+            'CRS-NT-014',
+            'CRS-ACT-009',
+            'CRS-NT-015',
+            'CRS-NT-016',
+            'CRS-NT-017',
+            'CRS-NT-018',
+            'CRS-NT-019',
+            'CRS-NT-020',
+            'CRS-NT-021',
+            'CRS-ACT-010',
+            'CRS-PAUL-1TES',
+            'CRS-PAUL-2TES',
+            'CRS-NT-022',
+            'CRS-NT-023',
+            'CRS-NT-024',
+            'CRS-ACT-011',
+            'CRS-PAUL-1COR-A',
+            'CRS-PAUL-1COR-B',
+            'CRS-PAUL-1COR-C',
+            'CRS-NT-025',
+            'CRS-NT-026',
+            'CRS-NT-027',
+            'CRS-NT-028',
+            'CRS-NT-029',
+            'CRS-NT-030',
+            'CRS-ACT-012',
+            'CRS-NT-031',
+            'CRS-ACT-013',
+            'CRS-NT-032',
+            'CRS-NT-033',
+            'CRS-NT-034',
+            'CRS-NT-035',
+            'CRS-NT-036',
+            'CRS-NT-037',
+            'CRS-NT-038',
+            'CRS-NT-039',
+            'CRS-NT-040',
+            'CRS-GLET-001',
+            'CRS-GLET-002',
+            'CRS-GLET-003',
+            'CRS-GLET-004',
+            'CRS-GLET-005',
+            'CRS-GLET-HEB-A',
+            'CRS-GLET-HEB-B',
+            'CRS-GLET-008',
+            'CRS-GLET-009',
+            'CRS-GLET-010',
+            'CRS-GLET-011',
+            'CRS-GLET-012',
+            'CRS-GLET-013',
+            'CRS-GLET-014',
+            'CRS-GLET-015',
+            'CRS-GLET-1PE',
+            'CRS-GLET-2PE',
+            'CRS-GLET-1JN',
+            'CRS-GLET-2JN',
+            'CRS-GLET-3JN',
+            'CRS-GLET-JDS',
+            'CRS-REV-001',
+            'CRS-REV-002',
+            'CRS-REV-003',
+            'CRS-REV-004',
+            'CRS-REV-005',
+            'CRS-REV-006',
+            'CRS-REV-007',
+            'CRS-REV-008',
+            'CRS-REV-009',
+            'CRS-REV-010',
+        ]);
+
+        return $order;
+    }
 
     private function persist(array $nodes, array $edges): StreamPlan
     {

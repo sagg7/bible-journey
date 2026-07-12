@@ -59,6 +59,11 @@ class ReadingBlock extends Model
         return $this->hasMany(ParallelLink::class, 'target_block_id');
     }
 
+    public function audioNarrations(): HasMany
+    {
+        return $this->hasMany(AudioNarration::class);
+    }
+
     public function isNarrativeAnchor(): bool
     {
         return $this->role === 'narrative_anchor';

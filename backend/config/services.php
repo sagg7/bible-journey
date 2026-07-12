@@ -47,6 +47,16 @@ return [
         'api_base' => 'https://api.youversion.com/v1',
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'tts_model' => env('GEMINI_TTS_MODEL', 'gemini-2.5-flash-preview-tts'),
+        'tts_timeout' => env('GEMINI_TTS_TIMEOUT', 240),
+    ],
+
+    'audio_narration' => [
+        'ffmpeg_binary' => env('AUDIO_NARRATION_FFMPEG_BINARY', 'ffmpeg'),
+    ],
+
     'revenuecat' => [
         'webhook_secret' => env('REVENUECAT_WEBHOOK_SECRET'),
     ],

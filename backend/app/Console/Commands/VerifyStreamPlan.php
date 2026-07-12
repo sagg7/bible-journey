@@ -274,7 +274,9 @@ class VerifyStreamPlan extends Command
             ->count();
 
         $maxRank = DB::table('stream_plan_nodes')
-            ->where('plan_id', $planId)->max('rank');
+            ->where('plan_id', $planId)
+            ->where('is_main_stream_node', true)
+            ->max('rank');
 
         $deadEnds = DB::select("
             SELECT COUNT(*) AS cnt

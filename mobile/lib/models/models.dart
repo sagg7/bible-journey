@@ -201,6 +201,7 @@ class ReadingBlockV2 {
   final bool requiredInCompleteMode;
   final bool shownInNarrativeFlow;
   final bool hasText;
+  final AudioNarrationInfo? audioNarration;
 
   ReadingBlockV2({
     required this.id,
@@ -213,6 +214,7 @@ class ReadingBlockV2 {
     required this.requiredInCompleteMode,
     required this.shownInNarrativeFlow,
     required this.hasText,
+    this.audioNarration,
   });
 
   factory ReadingBlockV2.fromJson(Map<String, dynamic> j) => ReadingBlockV2(
@@ -226,7 +228,51 @@ class ReadingBlockV2 {
     requiredInCompleteMode: j['required_in_complete_mode'] ?? true,
     shownInNarrativeFlow: j['shown_in_narrative_flow'] ?? true,
     hasText: j['has_text'] ?? false,
+    audioNarration: j['audio_narration'] != null
+        ? AudioNarrationInfo.fromJson(j['audio_narration'] as Map<String, dynamic>)
+        : null,
   );
+}
+
+class AudioNarrationInfo {
+  final int id;
+  final String provider;
+  final String voice;
+  final String model;
+  final String url;
+  final String? mimeType;
+  final double? durationSeconds;
+  final int? byteSize;
+  final String? generatedAt;
+
+  AudioNarrationInfo({
+    required this.id,
+    required this.provider,
+    required this.voice,
+    required this.model,
+    required this.url,
+    this.mimeType,
+    this.durationSeconds,
+    this.byteSize,
+    this.generatedAt,
+  });
+
+  factory AudioNarrationInfo.fromJson(Map<String, dynamic> j) {
+    final duration = j['duration_seconds'];
+    return AudioNarrationInfo(
+      id: j['id'] ?? 0,
+      provider: j['provider'] ?? '',
+      voice: j['voice'] ?? '',
+      model: j['model'] ?? '',
+      url: j['url'] ?? '',
+      mimeType: j['mime_type'],
+      durationSeconds: duration is num
+          ? duration.toDouble()
+          : double.tryParse(duration?.toString() ?? ''),
+      byteSize: j['byte_size'],
+      generatedAt: j['generated_at'],
+    );
+  }
 }
 
 class CrsNodeDetail {
@@ -672,6 +718,7 @@ class ReadingBlockDetail {
   final String? translationName;
   final String? bookOsisCode;
   final String? bookNameEs;
+  final AudioNarrationInfo? audioNarration;
 
   ReadingBlockDetail({
     required this.hasText,
@@ -681,24 +728,30 @@ class ReadingBlockDetail {
     this.translationName,
     this.bookOsisCode,
     this.bookNameEs,
+    this.audioNarration,
   });
 
   /// The chapter number shared by this block's verses (reading blocks are
   /// almost always a single chapter). Used to address highlights/sharing.
   int? get primaryChapter => verses.isEmpty ? null : verses.first.chapter;
 
-  factory ReadingBlockDetail.fromJson(Map<String, dynamic> j) =>
-      ReadingBlockDetail(
-        hasText: j['has_text'] == true,
-        verseCount: j['verse_count'] ?? 0,
-        verses: ((j['verses'] as List?) ?? [])
-            .map((v) => BibleVerseItem.fromJson(v as Map<String, dynamic>))
-            .toList(),
-        translationCode: (j['translation'] as Map<String, dynamic>?)?['code'],
-        translationName: (j['translation'] as Map<String, dynamic>?)?['name'],
-        bookOsisCode: (j['book'] as Map<String, dynamic>?)?['osis_code'],
-        bookNameEs: (j['book'] as Map<String, dynamic>?)?['name_es'],
-      );
+  factory ReadingBlockDetail.fromJson(Map<String, dynamic> j) {
+    final block = j['block'] as Map<String, dynamic>?;
+    final audio = block?['audio_narration'] as Map<String, dynamic>?;
+
+    return ReadingBlockDetail(
+      hasText: j['has_text'] == true,
+      verseCount: j['verse_count'] ?? 0,
+      verses: ((j['verses'] as List?) ?? [])
+          .map((v) => BibleVerseItem.fromJson(v as Map<String, dynamic>))
+          .toList(),
+      translationCode: (j['translation'] as Map<String, dynamic>?)?['code'],
+      translationName: (j['translation'] as Map<String, dynamic>?)?['name'],
+      bookOsisCode: (j['book'] as Map<String, dynamic>?)?['osis_code'],
+      bookNameEs: (j['book'] as Map<String, dynamic>?)?['name_es'],
+      audioNarration: audio != null ? AudioNarrationInfo.fromJson(audio) : null,
+    );
+  }
 }
 
 class CanonicalChapterContent {

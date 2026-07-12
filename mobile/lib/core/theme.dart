@@ -10,41 +10,70 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class BjColors {
   // Modern Deep
-  static const surfacePrimary   = Color(0xFF0B1220);
-  static const surfaceRaised    = Color(0xFF111A2E);
-  static const surfaceCard      = Color(0xFF18243A);
-  static const surfaceBorder    = Color(0xFF243050);
+  static const surfacePrimary = Color(0xFF0B1220);
+  static const surfaceRaised = Color(0xFF111A2E);
+  static const surfaceCard = Color(0xFF18243A);
+  static const surfaceBorder = Color(0xFF243050);
 
   // Accents
-  static const accentPrimary    = Color(0xFF6D4AFF); // violet — acciones + Ezra
+  static const accentPrimary = Color(0xFF6D4AFF); // violet — acciones + Ezra
   static const accentPrimaryMid = Color(0xFF8B6EFF);
-  static const accentBronze     = Color(0xFFBB8B14);
-  static const accentBronzeLight= Color(0xFFD9A441);
+  static const accentBronze = Color(0xFFBB8B14);
+  static const accentBronzeLight = Color(0xFFD9A441);
 
   // Text on dark
-  static const textPrimaryDark  = Color(0xFFF1EDE6); // bone white
-  static const textSecondaryDark= Color(0xFFB0B8CC);
-  static const textMutedDark    = Color(0xFF6B7A99);
+  static const textPrimaryDark = Color(0xFFF1EDE6); // bone white
+  static const textSecondaryDark = Color(0xFFB0B8CC);
+  static const textMutedDark = Color(0xFF6B7A99);
 
   // Editorial Light
-  static const surfaceReaderLight  = Color(0xFFF8F6F0);
+  static const surfaceReaderLight = Color(0xFFF8F6F0);
   static const surfaceReaderRaised = Color(0xFFEFEBE3);
-  static const textPrimaryLight    = Color(0xFF1A1612); // warm black
-  static const textSecondaryLight  = Color(0xFF4A3F34);
-  static const textMutedLight      = Color(0xFF8A7B6E);
+  static const surfaceReaderPapyrus = Color(0xFFF4E8D0);
+  static const surfaceReaderPapyrusRaised = Color(0xFFEADAB9);
+  static const textPrimaryLight = Color(0xFF1A1612); // warm black
+  static const textSecondaryLight = Color(0xFF4A3F34);
+  static const textMutedLight = Color(0xFF8A7B6E);
 
   // Certainty
-  static const certaintyHigh       = Color(0xFF34A87A); // green
-  static const certaintyProbable   = Color(0xFFA76BF8); // lavender
-  static const certaintyDebated    = Color(0xFFD9A441); // amber
+  static const certaintyHigh = Color(0xFF34A87A); // green
+  static const certaintyProbable = Color(0xFFA76BF8); // lavender
+  static const certaintyDebated = Color(0xFFD9A441); // amber
   static const certaintyUnresolved = Color(0xFF8892A4); // grey-blue
-  static const certaintyTraditional= Color(0xFF8B6E5A); // warm brown
+  static const certaintyTraditional = Color(0xFF8B6E5A); // warm brown
 
   // Status
   static const statusSuccess = Color(0xFF34A87A);
   static const statusWarning = Color(0xFFD9A441);
-  static const statusDanger  = Color(0xFFD94141);
+  static const statusDanger = Color(0xFFD94141);
 }
+
+const kReaderBackgroundDark = 'dark';
+const kReaderBackgroundPapyrus = 'papyrus';
+
+String resolveReaderBackground(String? saved, bool isSystemDark) {
+  if (saved == kReaderBackgroundDark || saved == kReaderBackgroundPapyrus) {
+    return saved!;
+  }
+
+  return isSystemDark ? kReaderBackgroundDark : kReaderBackgroundPapyrus;
+}
+
+bool isReaderBackgroundDark(String background) =>
+    background == kReaderBackgroundDark;
+
+Color readerBackgroundColor(String background) =>
+    isReaderBackgroundDark(background)
+    ? BjColors.surfacePrimary
+    : BjColors.surfaceReaderPapyrus;
+
+Color readerRaisedColor(String background) => isReaderBackgroundDark(background)
+    ? BjColors.surfaceCard
+    : BjColors.surfaceReaderPapyrusRaised;
+
+Color readerTextColor(String background) => isReaderBackgroundDark(background)
+    ? BjColors.textPrimaryDark
+    : BjColors.textPrimaryLight;
 
 // ─────────────────────────────────────────────
 // Theme mode provider
@@ -66,13 +95,19 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   Future<void> toggle() async {
     state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themePrefKey, state == ThemeMode.dark ? 'dark' : 'light');
+    await prefs.setString(
+      _themePrefKey,
+      state == ThemeMode.dark ? 'dark' : 'light',
+    );
   }
 
   Future<void> set(ThemeMode mode) async {
     state = mode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themePrefKey, mode == ThemeMode.dark ? 'dark' : 'light');
+    await prefs.setString(
+      _themePrefKey,
+      mode == ThemeMode.dark ? 'dark' : 'light',
+    );
   }
 }
 
@@ -87,16 +122,55 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
 ThemeData get modernDeepTheme {
   final base = ThemeData.dark(useMaterial3: true);
   final textTheme = GoogleFonts.interTextTheme(base.textTheme).copyWith(
-    bodyLarge: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 16, height: 1.5),
-    bodyMedium: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 14, height: 1.5),
-    bodySmall: GoogleFonts.inter(color: BjColors.textSecondaryDark, fontSize: 12),
-    labelSmall: GoogleFonts.inter(color: BjColors.textMutedDark, fontSize: 11, letterSpacing: 0.5),
-    titleLarge: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 20, fontWeight: FontWeight.w600),
-    titleMedium: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 16, fontWeight: FontWeight.w600),
-    titleSmall: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 14, fontWeight: FontWeight.w600),
-    headlineMedium: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 24, fontWeight: FontWeight.w700),
-    headlineSmall: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 20, fontWeight: FontWeight.w700),
-    labelLarge: GoogleFonts.inter(color: BjColors.textPrimaryDark, fontSize: 14, fontWeight: FontWeight.w500),
+    bodyLarge: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 16,
+      height: 1.5,
+    ),
+    bodyMedium: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 14,
+      height: 1.5,
+    ),
+    bodySmall: GoogleFonts.inter(
+      color: BjColors.textSecondaryDark,
+      fontSize: 12,
+    ),
+    labelSmall: GoogleFonts.inter(
+      color: BjColors.textMutedDark,
+      fontSize: 11,
+      letterSpacing: 0.5,
+    ),
+    titleLarge: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
+    titleMedium: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
+    titleSmall: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    ),
+    headlineMedium: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+    ),
+    headlineSmall: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+    ),
+    labelLarge: GoogleFonts.inter(
+      color: BjColors.textPrimaryDark,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
   );
 
   return base.copyWith(
@@ -128,7 +202,10 @@ ThemeData get modernDeepTheme {
         fontSize: 17,
         fontWeight: FontWeight.w600,
       ),
-      iconTheme: const IconThemeData(color: BjColors.textSecondaryDark, size: 22),
+      iconTheme: const IconThemeData(
+        color: BjColors.textSecondaryDark,
+        size: 22,
+      ),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: BjColors.surfaceRaised,
@@ -205,7 +282,10 @@ ThemeData get modernDeepTheme {
     chipTheme: ChipThemeData(
       backgroundColor: BjColors.surfaceCard,
       side: const BorderSide(color: BjColors.surfaceBorder, width: 0.5),
-      labelStyle: GoogleFonts.inter(color: BjColors.textSecondaryDark, fontSize: 12),
+      labelStyle: GoogleFonts.inter(
+        color: BjColors.textSecondaryDark,
+        fontSize: 12,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
@@ -222,16 +302,55 @@ ThemeData get modernDeepTheme {
 ThemeData get editorialLightTheme {
   final base = ThemeData.light(useMaterial3: true);
   final textTheme = GoogleFonts.interTextTheme(base.textTheme).copyWith(
-    bodyLarge: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 16, height: 1.6),
-    bodyMedium: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 14, height: 1.6),
-    bodySmall: GoogleFonts.inter(color: BjColors.textSecondaryLight, fontSize: 12),
-    labelSmall: GoogleFonts.inter(color: BjColors.textMutedLight, fontSize: 11, letterSpacing: 0.5),
-    titleLarge: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 20, fontWeight: FontWeight.w600),
-    titleMedium: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 16, fontWeight: FontWeight.w600),
-    titleSmall: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 14, fontWeight: FontWeight.w600),
-    headlineMedium: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 24, fontWeight: FontWeight.w700),
-    headlineSmall: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 20, fontWeight: FontWeight.w700),
-    labelLarge: GoogleFonts.inter(color: BjColors.textPrimaryLight, fontSize: 14, fontWeight: FontWeight.w500),
+    bodyLarge: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 16,
+      height: 1.6,
+    ),
+    bodyMedium: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 14,
+      height: 1.6,
+    ),
+    bodySmall: GoogleFonts.inter(
+      color: BjColors.textSecondaryLight,
+      fontSize: 12,
+    ),
+    labelSmall: GoogleFonts.inter(
+      color: BjColors.textMutedLight,
+      fontSize: 11,
+      letterSpacing: 0.5,
+    ),
+    titleLarge: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
+    titleMedium: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
+    titleSmall: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    ),
+    headlineMedium: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+    ),
+    headlineSmall: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+    ),
+    labelLarge: GoogleFonts.inter(
+      color: BjColors.textPrimaryLight,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
   );
 
   return base.copyWith(
@@ -264,7 +383,10 @@ ThemeData get editorialLightTheme {
         fontSize: 17,
         fontWeight: FontWeight.w600,
       ),
-      iconTheme: const IconThemeData(color: BjColors.textSecondaryLight, size: 22),
+      iconTheme: const IconThemeData(
+        color: BjColors.textSecondaryLight,
+        size: 22,
+      ),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: BjColors.surfaceReaderLight,
@@ -304,7 +426,10 @@ ThemeData get editorialLightTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: BjColors.surfaceReaderRaised,
-      hintStyle: GoogleFonts.inter(color: BjColors.textMutedLight, fontSize: 14),
+      hintStyle: GoogleFonts.inter(
+        color: BjColors.textMutedLight,
+        fontSize: 14,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFD4CFC8)),
@@ -378,13 +503,12 @@ TextStyle scriptureTextStyle({
   }
 }
 
-TextStyle scriptureVerseStyle() =>
-    GoogleFonts.inter(
-      fontSize: 11,
-      fontWeight: FontWeight.w600,
-      color: BjColors.textMutedLight,
-      letterSpacing: 0.3,
-    );
+TextStyle scriptureVerseStyle() => GoogleFonts.inter(
+  fontSize: 11,
+  fontWeight: FontWeight.w600,
+  color: BjColors.textMutedLight,
+  letterSpacing: 0.3,
+);
 
 // ─────────────────────────────────────────────
 // CertaintyBadge — shared component
@@ -413,15 +537,21 @@ Color certaintyColor(String? label) {
   if (l.contains('alta') || l.contains('high')) return BjColors.certaintyHigh;
   if (l.contains('probable')) return BjColors.certaintyProbable;
   if (l.contains('debat')) return BjColors.certaintyDebated;
-  if (l.contains('tradici') || l.contains('popular')) return BjColors.certaintyTraditional;
-  if (l.contains('especulat') || l.contains('speculat')) return BjColors.statusDanger;
+  if (l.contains('tradici') || l.contains('popular')) {
+    return BjColors.certaintyTraditional;
+  }
+  if (l.contains('especulat') || l.contains('speculat')) {
+    return BjColors.statusDanger;
+  }
   return BjColors.certaintyUnresolved;
 }
 
 IconData certaintyIcon(String? label) {
   if (label == null) return Icons.help_outline;
   final l = label.toLowerCase();
-  if (l.contains('alta') || l.contains('high')) return Icons.check_circle_outline;
+  if (l.contains('alta') || l.contains('high')) {
+    return Icons.check_circle_outline;
+  }
   if (l.contains('probable')) return Icons.radio_button_checked;
   if (l.contains('debat')) return Icons.balance;
   if (l.contains('tradici') || l.contains('popular')) return Icons.history_edu;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +46,29 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     }
   }
 
+  String _offeringsErrorMessage(Object? error, {required bool hasNoPackages}) {
+    if (error is TimeoutException) {
+      return 'La tienda tardó demasiado en responder. Intenta de nuevo en unos segundos.';
+    }
+
+    if (error is PlatformException) {
+      final code = PurchasesErrorHelper.getErrorCode(error);
+      final details = '${error.message ?? ''} ${error.details ?? ''}'.toLowerCase();
+
+      if (code == PurchasesErrorCode.purchaseNotAllowedError ||
+          details.contains('billing_unavailable') ||
+          details.contains('billing is not available')) {
+        return 'Las compras no están disponibles en este dispositivo. Para probar planes en Android, instala la app desde Google Play con una cuenta tester.';
+      }
+    }
+
+    if (hasNoPackages) {
+      return 'No hay planes disponibles en este momento.';
+    }
+
+    return 'No se pudieron cargar los planes de suscripción. Intenta de nuevo.';
+  }
+
   Future<void> _purchase(Package package) async {
     setState(() => _purchasing = true);
     try {
@@ -79,6 +104,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           final packages = snapshot.data?.current?.availablePackages ?? [];
 
           if (snapshot.hasError || packages.isEmpty) {
+            final message = _offeringsErrorMessage(
+              snapshot.error,
+              hasNoPackages: packages.isEmpty,
+            );
+
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -88,9 +118,19 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                     Icon(Icons.cloud_off, size: 44, color: cs.onSurfaceVariant),
                     const SizedBox(height: 12),
                     Text(
-                      'No se pudieron cargar los planes de suscripción.',
+                      message,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _offerings = Purchases.getOfferings()
+                              .timeout(const Duration(seconds: 10));
+                        });
+                      },
+                      child: const Text('Reintentar'),
                     ),
                   ],
                 ),

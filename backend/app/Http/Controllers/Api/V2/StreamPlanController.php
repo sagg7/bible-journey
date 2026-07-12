@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
+use App\Models\AudioNarration;
 use App\Models\StreamPlan;
 use App\Models\StreamPlanNode;
+use App\Models\Translation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class StreamPlanController extends Controller
 {
@@ -105,6 +108,7 @@ class StreamPlanController extends Controller
             ]);
         }
 
+        $audioByBlock = $this->audioNarrationsForBlocks($crs->blocks->pluck('id'), $request, $includeTestOnly);
         $blocks = $crs->blocks->map(fn($b) => [
             'id'                        => $b->id,
             'source_map'                => $b->source_map,
@@ -116,6 +120,7 @@ class StreamPlanController extends Controller
             'required_in_complete_mode' => $b->required_in_complete_mode,
             'shown_in_narrative_flow'   => $b->shown_in_narrative_flow,
             'has_text'                  => $b->passage_id !== null || $b->start_book_id !== null,
+            'audio_narration'           => $this->formatAudioNarration($audioByBlock->get($b->id)),
         ]);
 
         $outEdges = $node->outboundEdges()
@@ -181,7 +186,6 @@ class StreamPlanController extends Controller
                     ->select('id', 'crs_id', 'display_reference', 'display_order'),
             ])
             ->reorder()
-            ->orderBy('user_facing_era_sort')
             ->orderBy('rank')
             ->get();
 
@@ -260,6 +264,51 @@ class StreamPlanController extends Controller
             'excerpts'          => $content?->excerpts ?? [],
             'copyright'         => '© Ellen G. White Estate',
             'version'           => $content?->content_version,
+        ];
+    }
+
+    /**
+     * @param Collection<int, int> $blockIds
+     * @return Collection<int, AudioNarration>
+     */
+    private function audioNarrationsForBlocks(Collection $blockIds, Request $request, bool $includeTestOnly): Collection
+    {
+        $translationCode = $request->query('audio_translation', $request->query('translation', 'NVI'));
+        $translation = Translation::where('code', $translationCode)
+            ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+            ->first();
+
+        if (! $translation || $blockIds->isEmpty()) {
+            return collect();
+        }
+
+        return AudioNarration::whereIn('reading_block_id', $blockIds->all())
+            ->where('translation_id', $translation->id)
+            ->where('provider', $request->query('audio_provider', 'gemini'))
+            ->where('voice', $request->query('audio_voice', 'Charon'))
+            ->where('status', 'success')
+            ->orderByDesc('generated_at')
+            ->get()
+            ->unique('reading_block_id')
+            ->keyBy('reading_block_id');
+    }
+
+    private function formatAudioNarration(?AudioNarration $audio): ?array
+    {
+        if (! $audio) {
+            return null;
+        }
+
+        return [
+            'id' => $audio->id,
+            'provider' => $audio->provider,
+            'voice' => $audio->voice,
+            'model' => $audio->model,
+            'url' => $audio->publicUrl(),
+            'mime_type' => $audio->mime_type,
+            'duration_seconds' => $audio->duration_seconds,
+            'byte_size' => $audio->byte_size,
+            'generated_at' => $audio->generated_at?->toIsoString(),
         ];
     }
 }

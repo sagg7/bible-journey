@@ -52,9 +52,6 @@ class Era {
 List<Era> buildEras(List<CrsNodeItem> nodes) {
   final mainNodes = nodes.where((n) => n.isMainStreamNode).toList()
     ..sort((a, b) {
-      final esA = a.userFacingEraSort ?? 999;
-      final esB = b.userFacingEraSort ?? 999;
-      if (esA != esB) return esA.compareTo(esB);
       return a.rank.compareTo(b.rank);
     });
 

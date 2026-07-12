@@ -61,13 +61,18 @@ class _CanonicalChapterScreenState
 
   @override
   Widget build(BuildContext context) {
-    final chapterAsync =
-        ref.watch(canonicalChapterProvider((widget.osisCode, _currentChapter)));
+    final chapterAsync = ref.watch(
+      canonicalChapterProvider((widget.osisCode, _currentChapter)),
+    );
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? BjColors.surfacePrimary : BjColors.surfaceReaderLight;
-    final textColor =
-        isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final systemIsDark = Theme.of(context).brightness == Brightness.dark;
+    final background = resolveReaderBackground(
+      ref.watch(localProgressProvider).value?.readerBackground,
+      systemIsDark,
+    );
+    final isDark = isReaderBackgroundDark(background);
+    final bg = readerBackgroundColor(background);
+    final textColor = readerTextColor(background);
 
     return Scaffold(
       backgroundColor: bg,
@@ -83,7 +88,8 @@ class _CanonicalChapterScreenState
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => ref.invalidate(
-                    canonicalChapterProvider((widget.osisCode, _currentChapter))),
+                  canonicalChapterProvider((widget.osisCode, _currentChapter)),
+                ),
                 child: const Text('Reintentar'),
               ),
             ],
@@ -91,7 +97,7 @@ class _CanonicalChapterScreenState
         ),
         data: (content) => Stack(
           children: [
-            _buildContent(context, content, textColor, isDark),
+            _buildContent(context, content, textColor, isDark, bg),
             if (_selection.isActive)
               Positioned(
                 left: 0,
@@ -114,127 +120,148 @@ class _CanonicalChapterScreenState
     );
   }
 
-  Widget _buildContent(BuildContext context, CanonicalChapterContent content,
-      Color textColor, bool isDark) {
+  Widget _buildContent(
+    BuildContext context,
+    CanonicalChapterContent content,
+    Color textColor,
+    bool isDark,
+    Color backgroundColor,
+  ) {
     final theme = Theme.of(context);
     final fontScale = ref.watch(effectiveFontScaleProvider);
     final fontFamily =
-        ref.watch(localProgressProvider).value?.fontFamily ?? kDefaultScriptureFont;
-    final highlights = ref
-            .watch(chapterHighlightsProvider((widget.osisCode, _currentChapter)))
+        ref.watch(localProgressProvider).value?.fontFamily ??
+        kDefaultScriptureFont;
+    final highlights =
+        ref
+            .watch(
+              chapterHighlightsProvider((widget.osisCode, _currentChapter)),
+            )
             .value ??
         [];
     return PinchZoomListener(
       child: CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          backgroundColor:
-              isDark ? BjColors.surfacePrimary : BjColors.surfaceReaderLight,
-          pinned: true,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () => context.pop(),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                content.bookNameEs,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: BjColors.accentBronze,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'Capítulo ${content.chapter}',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          actions: [
-            BookmarkButton.canonical(
-              color: textColor.withValues(alpha: 0.7),
-              label: '${content.bookNameEs} ${content.chapter}',
-              osisCode: widget.osisCode,
-              chapter: content.chapter,
+        slivers: [
+          SliverAppBar(
+            backgroundColor: backgroundColor,
+            pinned: true,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios, color: textColor),
+              onPressed: () => context.pop(),
             ),
-            TextZoomButton(color: textColor.withValues(alpha: 0.7)),
-            if (content.translationCode != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Center(
-                  child: TextButton.icon(
-                    onPressed: () async {
-                      final code = await context.push<String>('/traducciones');
-                      if (code != null) {
-                        ref.read(translationProvider.notifier).state = code;
-                        ref.read(localProgressProvider.notifier).setTranslation(code);
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: textColor.withValues(alpha: 0.7),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    icon: Text(
-                      content.translationCode!,
-                      style: theme.textTheme.labelSmall?.copyWith(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  content.bookNameEs,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: BjColors.accentBronze,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Capítulo ${content.chapter}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              BookmarkButton.canonical(
+                color: textColor.withValues(alpha: 0.7),
+                label: '${content.bookNameEs} ${content.chapter}',
+                osisCode: widget.osisCode,
+                chapter: content.chapter,
+              ),
+              TextZoomButton(color: textColor.withValues(alpha: 0.7)),
+              if (content.translationCode != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Center(
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        final code = await context.push<String>(
+                          '/traducciones',
+                        );
+                        if (code != null) {
+                          ref.read(translationProvider.notifier).state = code;
+                          ref
+                              .read(localProgressProvider.notifier)
+                              .setTranslation(code);
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: textColor.withValues(alpha: 0.7),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      icon: Text(
+                        content.translationCode!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: textColor.withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      label: Icon(
+                        Icons.expand_more,
+                        size: 16,
                         color: textColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    label: Icon(Icons.expand_more, size: 16, color: textColor.withValues(alpha: 0.7)),
                   ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          ),
 
-        // Book + chapter heading
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-            child: Text(
-              '${content.bookNameEs} ${content.chapter}',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w700,
+          // Book + chapter heading
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Text(
+                '${content.bookNameEs} ${content.chapter}',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
-        ),
 
-        // Verses
-        if (!content.hasText || content.verses.isEmpty)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(
+          // Verses
+          if (!content.hasText || content.verses.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
                       color: isDark
                           ? BjColors.surfaceBorder
-                          : const Color(0xFFE0DDD8)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Texto no disponible para este capítulo.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textColor.withValues(alpha: 0.6),
-                    fontStyle: FontStyle.italic,
+                          : const Color(0xFFE0DDD8),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Texto no disponible para este capítulo.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: textColor.withValues(alpha: 0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
               ),
-            ),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) {
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate((_, i) {
                   final v = content.verses[i];
                   final selected = _selection.contains(v.verse);
                   final savedHex = highlights
@@ -243,19 +270,23 @@ class _CanonicalChapterScreenState
                       .firstOrNull;
 
                   return GestureDetector(
-                    onLongPress: () => setState(() => _selection.beginAt(v.verse)),
+                    onLongPress: () =>
+                        setState(() => _selection.beginAt(v.verse)),
                     onTap: _selection.isActive
                         ? () => setState(() => _selection.extendTo(v.verse))
                         : null,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 2,
+                        horizontal: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: selected
                             ? BjColors.accentPrimary.withValues(alpha: 0.25)
                             : savedHex != null
-                                ? hexToColor(savedHex).withValues(alpha: 0.35)
-                                : null,
+                            ? hexToColor(savedHex).withValues(alpha: 0.35)
+                            : null,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: RichText(
@@ -272,34 +303,32 @@ class _CanonicalChapterScreenState
                             TextSpan(
                               text: v.text,
                               style: scriptureTextStyle(
-                                      fontSize: 17 * fontScale,
-                                      height: 1.8,
-                                      fontFamily: fontFamily)
-                                  .copyWith(color: textColor),
+                                fontSize: 17 * fontScale,
+                                height: 1.8,
+                                fontFamily: fontFamily,
+                              ).copyWith(color: textColor),
                             ),
                           ],
                         ),
                       ),
                     ),
                   );
-                },
-                childCount: content.verses.length,
+                }, childCount: content.verses.length),
               ),
+            ),
+
+          // Prev / next navigation
+          SliverToBoxAdapter(
+            child: _ChapterNav(
+              content: content,
+              textColor: textColor,
+              isDark: isDark,
+              onChapter: _goChapter,
             ),
           ),
 
-        // Prev / next navigation
-        SliverToBoxAdapter(
-          child: _ChapterNav(
-            content: content,
-            textColor: textColor,
-            isDark: isDark,
-            onChapter: _goChapter,
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 48)),
-      ],
+          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+        ],
       ),
     );
   }
@@ -320,8 +349,7 @@ class _ChapterNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor =
-        isDark ? BjColors.surfaceCard : const Color(0xFFEFEDE8);
+    final cardColor = isDark ? BjColors.surfaceCard : const Color(0xFFEFEDE8);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
@@ -332,23 +360,29 @@ class _ChapterNav extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => onChapter(content.prevChapter!),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: cardColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.chevron_left,
-                          size: 18,
-                          color: textColor.withValues(alpha: 0.6)),
+                      Icon(
+                        Icons.chevron_left,
+                        size: 18,
+                        color: textColor.withValues(alpha: 0.6),
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           'Capítulo ${content.prevChapter}',
                           style: TextStyle(
-                              color: textColor.withValues(alpha: 0.8),
-                              fontSize: 13),
+                            color: textColor.withValues(alpha: 0.8),
+                            fontSize: 13,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -367,7 +401,10 @@ class _ChapterNav extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => onChapter(content.nextChapter!),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: cardColor,
                     borderRadius: BorderRadius.circular(10),
@@ -380,15 +417,18 @@ class _ChapterNav extends StatelessWidget {
                           'Capítulo ${content.nextChapter}',
                           textAlign: TextAlign.end,
                           style: TextStyle(
-                              color: textColor.withValues(alpha: 0.8),
-                              fontSize: 13),
+                            color: textColor.withValues(alpha: 0.8),
+                            fontSize: 13,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.chevron_right,
-                          size: 18,
-                          color: textColor.withValues(alpha: 0.6)),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: textColor.withValues(alpha: 0.6),
+                      ),
                     ],
                   ),
                 ),

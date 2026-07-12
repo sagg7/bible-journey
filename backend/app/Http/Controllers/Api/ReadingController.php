@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AudioNarration;
 use App\Models\BiblicalBook;
 use App\Models\BibleChapter;
 use App\Models\BibleVerse;
@@ -82,6 +83,7 @@ class ReadingController extends Controller
                 'end_chapter'       => $block->end_chapter,
                 'end_verse'         => $block->end_verse,
                 'confidence'        => $block->placement_confidence,
+                'audio_narration'   => $this->audioNarrationPayload($block, $request, $includeTestOnly),
             ],
             'book' => $block->startBook ? [
                 'id'         => $block->startBook->id,
@@ -239,6 +241,42 @@ class ReadingController extends Controller
         ));
 
         return $verses;
+    }
+
+    private function audioNarrationPayload(ReadingBlock $block, Request $request, bool $includeTestOnly): ?array
+    {
+        $audioTranslationCode = $request->query('audio_translation', $request->query('translation', 'NVI'));
+        $audioTranslation = Translation::where('code', $audioTranslationCode)
+            ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+            ->first();
+
+        if (! $audioTranslation) {
+            return null;
+        }
+
+        $audio = AudioNarration::where('reading_block_id', $block->id)
+            ->where('translation_id', $audioTranslation->id)
+            ->where('provider', $request->query('audio_provider', 'gemini'))
+            ->where('voice', $request->query('audio_voice', 'Charon'))
+            ->where('status', 'success')
+            ->orderByDesc('generated_at')
+            ->first();
+
+        if (! $audio) {
+            return null;
+        }
+
+        return [
+            'id' => $audio->id,
+            'provider' => $audio->provider,
+            'voice' => $audio->voice,
+            'model' => $audio->model,
+            'url' => $audio->publicUrl(),
+            'mime_type' => $audio->mime_type,
+            'duration_seconds' => $audio->duration_seconds,
+            'byte_size' => $audio->byte_size,
+            'generated_at' => $audio->generated_at?->toIsoString(),
+        ];
     }
 
     private function fetchVersesInRange(
