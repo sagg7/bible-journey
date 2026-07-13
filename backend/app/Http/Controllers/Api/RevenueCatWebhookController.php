@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 
 class RevenueCatWebhookController extends Controller
 {
-    private const ACTIVE_EVENTS = ['INITIAL_PURCHASE', 'RENEWAL', 'UNCANCELLATION', 'PRODUCT_CHANGE'];
+    private const ACTIVE_EVENTS = ['INITIAL_PURCHASE', 'RENEWAL', 'UNCANCELLATION', 'PRODUCT_CHANGE', 'TRANSFER'];
     private const INACTIVE_EVENTS = ['EXPIRATION', 'CANCELLATION'];
 
     public function handle(Request $request): JsonResponse
@@ -22,7 +22,14 @@ class RevenueCatWebhookController extends Controller
 
         $event = $request->input('event', []);
         $type = $event['type'] ?? null;
-        $appUserId = $event['app_user_id'] ?? null;
+
+        // TRANSFER events move an anonymous purchase onto an identified user
+        // (e.g. a purchase made before login); the destination is in
+        // transferred_to, not app_user_id.
+        $transferredTo = $event['transferred_to'] ?? null;
+        $appUserId = ($type === 'TRANSFER' && is_array($transferredTo) && ! empty($transferredTo))
+            ? end($transferredTo)
+            : ($event['app_user_id'] ?? null);
 
         if (! $type || ! $appUserId) {
             return response()->json(['status' => 'ignored']);

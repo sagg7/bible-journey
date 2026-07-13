@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../core/api.dart';
+import '../core/auth.dart';
 import '../core/theme.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
@@ -91,6 +92,35 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loggedIn = ref.watch(authProvider) != null;
+
+    if (!loggedIn) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Suscripción')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 44, color: cs.onSurfaceVariant),
+                const SizedBox(height: 12),
+                Text(
+                  'Inicia sesión para suscribirte. Necesitamos tu cuenta para vincular la compra.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.push('/auth?next=/suscripcion'),
+                  child: const Text('Iniciar sesión'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Suscripción')),
