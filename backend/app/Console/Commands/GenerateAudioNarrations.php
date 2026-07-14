@@ -7,6 +7,7 @@ use App\Models\ReadingBlock;
 use App\Models\StreamPlan;
 use App\Models\Translation;
 use App\Services\Audio\AudioNarrationTextBuilder;
+use App\Services\Audio\AudioSegmentCache;
 use App\Services\Audio\GeminiTtsClient;
 use App\Services\Audio\PcmAudio;
 use Illuminate\Console\Command;
@@ -42,6 +43,7 @@ class GenerateAudioNarrations extends Command
         private readonly AudioNarrationTextBuilder $textBuilder,
         private readonly GeminiTtsClient $gemini,
         private readonly PcmAudio $audio,
+        private readonly AudioSegmentCache $segmentCache,
     ) {
         parent::__construct();
     }
@@ -321,6 +323,13 @@ class GenerateAudioNarrations extends Command
             $segmentCount = count($source['segments']);
             $pcmPath = $this->audio->temporaryPath('pcm');
             $outputPath = null;
+            $cacheHits = 0;
+            $cacheWrites = 0;
+
+            if ($this->option('force')) {
+                $this->segmentCache->deleteRun($narration, $source);
+            }
+
             $pcmHandle = fopen($pcmPath, 'wb');
             if (! $pcmHandle) {
                 throw new \RuntimeException('Unable to create PCM temp file.');
@@ -334,19 +343,33 @@ class GenerateAudioNarrations extends Command
                             $pcmBytes += $this->audio->appendSilence($pcmHandle);
                         }
 
-                        $this->line('  tts segment '.($segmentIndex + 1).'/'.$segmentCount.' chars='.mb_strlen($segment));
-                        $chunk = $this->gemini->synthesizePcm(
-                            $segment,
-                            $narration->voice,
-                            $narration->model,
-                            $source['prompt']
-                        );
-                        $pcmBytes += $this->audio->appendPcmChunk($pcmHandle, $chunk);
-                        unset($chunk);
+                        $segmentPath = $this->segmentCache->segmentPath($narration, $source, $segmentIndex, $segment);
+                        if ($this->segmentCache->has($segmentPath)) {
+                            $cacheHits++;
+                            $this->line(sprintf(
+                                '  cached segment %d/%d bytes=%d',
+                                $segmentIndex + 1,
+                                $segmentCount,
+                                $this->segmentCache->byteSize($segmentPath)
+                            ));
+                        } else {
+                            $this->line('  tts segment '.($segmentIndex + 1).'/'.$segmentCount.' chars='.mb_strlen($segment));
+                            $chunk = $this->gemini->synthesizePcm(
+                                $segment,
+                                $narration->voice,
+                                $narration->model,
+                                $source['prompt']
+                            );
+                            $this->segmentCache->put($segmentPath, $chunk);
+                            $cacheWrites++;
+                            unset($chunk);
 
-                        if ($segmentIndex < $segmentCount - 1 && ($sleepMs = (int) $this->option('sleep-ms')) > 0) {
-                            usleep($sleepMs * 1000);
+                            if ($segmentIndex < $segmentCount - 1 && ($sleepMs = (int) $this->option('sleep-ms')) > 0) {
+                                usleep($sleepMs * 1000);
+                            }
                         }
+
+                        $pcmBytes += $this->segmentCache->appendTo($pcmHandle, $segmentPath);
                     }
                 } finally {
                     fclose($pcmHandle);
@@ -390,6 +413,8 @@ class GenerateAudioNarrations extends Command
                 ])->save();
 
                 $this->line(sprintf('  saved: %s %.1fs %s bytes', $path, $duration, $byteSize));
+                $this->line(sprintf('  segment cache: reused=%d generated=%d', $cacheHits, $cacheWrites));
+                $this->segmentCache->deleteRun($narration, $source);
             } finally {
                 @unlink($pcmPath);
                 if ($outputPath) {
