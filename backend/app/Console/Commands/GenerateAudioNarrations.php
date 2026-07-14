@@ -318,52 +318,84 @@ class GenerateAudioNarrations extends Command
         try {
             $previousDisk = $narration->disk ?: 'public';
             $previousPath = $narration->path;
-            $chunks = [];
             $segmentCount = count($source['segments']);
-            foreach ($source['segments'] as $segmentIndex => $segment) {
-                $this->line('  tts segment '.($segmentIndex + 1).'/'.$segmentCount.' chars='.mb_strlen($segment));
-                $chunks[] = $this->gemini->synthesizePcm(
-                    $segment,
-                    $narration->voice,
-                    $narration->model,
-                    $source['prompt']
-                );
+            $pcmPath = $this->audio->temporaryPath('pcm');
+            $outputPath = null;
+            $pcmHandle = fopen($pcmPath, 'wb');
+            if (! $pcmHandle) {
+                throw new \RuntimeException('Unable to create PCM temp file.');
+            }
 
-                if ($segmentIndex < $segmentCount - 1 && ($sleepMs = (int) $this->option('sleep-ms')) > 0) {
-                    usleep($sleepMs * 1000);
+            try {
+                try {
+                    $pcmBytes = 0;
+                    foreach ($source['segments'] as $segmentIndex => $segment) {
+                        if ($segmentIndex > 0) {
+                            $pcmBytes += $this->audio->appendSilence($pcmHandle);
+                        }
+
+                        $this->line('  tts segment '.($segmentIndex + 1).'/'.$segmentCount.' chars='.mb_strlen($segment));
+                        $chunk = $this->gemini->synthesizePcm(
+                            $segment,
+                            $narration->voice,
+                            $narration->model,
+                            $source['prompt']
+                        );
+                        $pcmBytes += $this->audio->appendPcmChunk($pcmHandle, $chunk);
+                        unset($chunk);
+
+                        if ($segmentIndex < $segmentCount - 1 && ($sleepMs = (int) $this->option('sleep-ms')) > 0) {
+                            usleep($sleepMs * 1000);
+                        }
+                    }
+                } finally {
+                    fclose($pcmHandle);
+                }
+
+                $duration = $this->audio->durationSecondsFromByteCount($pcmBytes);
+                $outputPath = $format === 'mp3'
+                    ? $this->audio->convertPcmFileToMp3File($pcmPath, (string) config('services.audio_narration.ffmpeg_binary', 'ffmpeg'))
+                    : $this->audio->wavFileFromPcmFile($pcmPath, $pcmBytes);
+                $extension = $format === 'mp3' ? 'mp3' : 'wav';
+                $mime = $format === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+                $path = $this->path($narration, $source['source_hash'], $extension);
+                $stream = fopen($outputPath, 'rb');
+                if (! $stream) {
+                    throw new \RuntimeException('Unable to read generated audio file.');
+                }
+
+                try {
+                    Storage::disk('public')->put($path, $stream);
+                } finally {
+                    fclose($stream);
+                }
+
+                $byteSize = filesize($outputPath) ?: 0;
+                if ($previousPath && $previousPath !== $path) {
+                    Storage::disk($previousDisk)->delete($previousPath);
+                }
+
+                $narration->forceFill([
+                    'status' => 'success',
+                    'disk' => 'public',
+                    'path' => $path,
+                    'mime_type' => $mime,
+                    'byte_size' => $byteSize,
+                    'duration_seconds' => round($duration, 3),
+                    'segment_count' => count($source['segments']),
+                    'source_hash' => $source['source_hash'],
+                    'prompt_hash' => $source['prompt_hash'],
+                    'generated_at' => now(),
+                    'error_message' => null,
+                ])->save();
+
+                $this->line(sprintf('  saved: %s %.1fs %s bytes', $path, $duration, $byteSize));
+            } finally {
+                @unlink($pcmPath);
+                if ($outputPath) {
+                    @unlink($outputPath);
                 }
             }
-
-            $pcm = $this->audio->concatenateWithSilence($chunks);
-            $wav = $this->audio->wavFromPcm($pcm);
-            $duration = $this->audio->durationSecondsFromPcm($pcm);
-            $bytes = $format === 'mp3'
-                ? $this->audio->convertWavToMp3($wav, (string) config('services.audio_narration.ffmpeg_binary', 'ffmpeg'))
-                : $wav;
-
-            $extension = $format === 'mp3' ? 'mp3' : 'wav';
-            $mime = $format === 'mp3' ? 'audio/mpeg' : 'audio/wav';
-            $path = $this->path($narration, $source['source_hash'], $extension);
-            Storage::disk('public')->put($path, $bytes);
-            if ($previousPath && $previousPath !== $path) {
-                Storage::disk($previousDisk)->delete($previousPath);
-            }
-
-            $narration->forceFill([
-                'status' => 'success',
-                'disk' => 'public',
-                'path' => $path,
-                'mime_type' => $mime,
-                'byte_size' => strlen($bytes),
-                'duration_seconds' => round($duration, 3),
-                'segment_count' => count($source['segments']),
-                'source_hash' => $source['source_hash'],
-                'prompt_hash' => $source['prompt_hash'],
-                'generated_at' => now(),
-                'error_message' => null,
-            ])->save();
-
-            $this->line(sprintf('  saved: %s %.1fs %s bytes', $path, $duration, strlen($bytes)));
         } catch (Throwable $e) {
             $narration->forceFill([
                 'status' => 'failed',
