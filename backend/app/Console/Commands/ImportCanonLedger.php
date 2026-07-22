@@ -129,12 +129,44 @@ class ImportCanonLedger extends Command
             $era      = $data['era_window'] ?? $data['era'] ?? $data['era_es'] ?? 'Sin era';
             $sortKey  = (int) ($data['map_sequence'] ?? $data['local_order'] ?? $data['sort_key'] ?? 0);
             $titleEs  = $data['reading_set_title'] ?? $data['title_es'] ?? $data['title'] ?? $sourceMap;
+            $estimatedDateStart = $this->firstValue($data, [
+                'approximate_date_start',
+                'estimated_date',
+                'estimated_date_start',
+                'date',
+                'date_start',
+                'fecha',
+                'fecha_estimada',
+                'fecha_aproximada',
+                'fecha_aprox',
+                'fecha_inicio',
+            ]);
+            $estimatedDateEnd = $this->firstValue($data, [
+                'approximate_date_end',
+                'estimated_date_end',
+                'date_end',
+                'fecha_fin',
+            ]);
+            [$estimatedYearStart, $estimatedYearEnd] = $this->parseYearRange($estimatedDateStart ?? '');
+            $dateConfidence = $this->firstValue($data, [
+                'date_confidence',
+                'estimated_date_confidence',
+                'approximate_date_confidence',
+                'fecha_confianza',
+                'certeza_fecha',
+                'certeza_de_la_fecha',
+            ]);
 
             $record = [
                 'source_map'          => $sourceMap,
                 'era'                 => $era,
                 'era_slug'            => Str::slug($era),
                 'sort_key'            => $sortKey,
+                'approximate_date_start' => $estimatedDateStart,
+                'approximate_date_end' => $estimatedDateEnd,
+                'date_confidence'     => $dateConfidence !== null ? $this->mapConfidence($dateConfidence) : null,
+                'approximate_year_start' => $estimatedYearStart,
+                'approximate_year_end' => $estimatedYearEnd,
                 'title_es'            => $titleEs,
                 'title_en'            => $data['title_en'] ?? null,
                 'placement_confidence'=> $this->mapConfidence($data['placement_confidence'] ?? ''),
@@ -399,6 +431,43 @@ class ImportCanonLedger extends Command
             'speculative' => 'especulativa', 'especulativa' => 'especulativa',
         ];
         return $map[strtolower(trim($raw))] ?? 'probable';
+    }
+
+    private function firstValue(array $data, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = trim((string) ($data[$key] ?? ''));
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function parseYearRange(string $label): array
+    {
+        $isBce = str_contains($label, 'a.C.');
+        $isCe = str_contains($label, 'd.C.');
+
+        if (! $isBce && ! $isCe) {
+            return [null, null];
+        }
+
+        if (! preg_match('/(\d{1,4})(?:-(\d{1,4}))?/', $label, $matches)) {
+            return [null, null];
+        }
+
+        $start = (int) $matches[1];
+        $end = isset($matches[2]) ? (int) $matches[2] : $start;
+
+        if ($isBce) {
+            $start *= -1;
+            $end *= -1;
+        }
+
+        return [$start, $end];
     }
 
     private function mapRole(string $raw): string

@@ -151,6 +151,17 @@ class HarmonizationResolver
         $this->errors   = [];
 
         $nodes = $this->buildNodes();
+
+        // Un era_slug fuera de ERA_CANONICAL_ORDER cae al bucket 999 y el nodo
+        // termina al final del plan (así se colaron CRS-EZK-GRP-001/002 con
+        // 'exile' en el compile 12). Antes fallaba en silencio; ahora avisa.
+        foreach ($nodes as $node) {
+            $slug = $node['era_slug'] ?? '';
+            if (! array_key_exists($slug, self::ERA_CANONICAL_ORDER)) {
+                $this->warnings[] = "era_slug '{$slug}' de {$node['source_map']} no está en ERA_CANONICAL_ORDER — el nodo caería al final del plan.";
+            }
+        }
+
         $edges = $this->buildEdges($nodes);
 
         // Hard constraints

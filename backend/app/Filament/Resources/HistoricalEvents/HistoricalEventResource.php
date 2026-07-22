@@ -20,15 +20,15 @@ class HistoricalEventResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
-    protected static ?string $navigationLabel = 'Eventos';
+    protected static ?string $navigationLabel = 'Eventos piloto (David)';
 
     protected static ?string $modelLabel = 'evento';
 
-    protected static ?string $pluralModelLabel = 'eventos';
+    protected static ?string $pluralModelLabel = 'eventos piloto';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Contenido';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 99;
 
     public static function shouldRegisterNavigation(): bool
     {

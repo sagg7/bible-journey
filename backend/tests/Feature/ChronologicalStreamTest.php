@@ -773,16 +773,31 @@ class ChronologicalStreamTest extends TestCase
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 34. No Required Window appears as a standalone main-stream era header
-    //     — windows with complete_mode_required=1 must remain secondary nodes
+    // 34. Required-window chapters must never be covered by STRICTLY-SECONDARY
+    //     roles promoted to main stream. Nota (auditoría 2026-07-16): la regla
+    //     original excluía solo historical_bridge, pero contradecía al test #6
+    //     y al diseño real del producto — prophetic_context (ventanas de Isaías
+    //     que COMPONEN las eras 'El exilio y la esperanza del retorno' /
+    //     'El retorno'), canonical_fallback (epístolas, único contenido main de
+    //     'Las cartas…'/'Cartas generales…') y apocalyptic_literary_sequence
+    //     (Apocalipsis) son nodos main de primera clase, tal como se ve en el
+    //     plan publicado en producción. La regla protege ahora los roles que sí
+    //     deben permanecer secundarios (poesía, colecciones, genealogías,
+    //     contextos editoriales).
     // ──────────────────────────────────────────────────────────────────────────
     public function test_required_windows_do_not_appear_as_main_stream_eras(): void
     {
         $plan = $this->plan91();
 
-        // Required-window chapters (not main events, not bridges) must be covered
-        // by secondary nodes — not by main-stream nodes that would create era headers.
-        // Allow historical_bridge (is_main_stream_node=1 but has no reading blocks).
+        $strictlySecondaryRoles = [
+            'associated_poetry',
+            'literary_collection',
+            'genealogy_context',
+            'editorial_context',
+            'composition_context',
+            'epistolary_context',
+        ];
+
         $illegallyExposed = \Illuminate\Support\Facades\DB::table('chronological_coverage_paths as cp')
             ->join('stream_plan_nodes as spn', 'spn.id', '=', 'cp.primary_stream_plan_node_id')
             ->join('chronological_reading_sets as crs', 'crs.id', '=', 'spn.crs_id')
@@ -792,12 +807,12 @@ class ChronologicalStreamTest extends TestCase
             ->where('cp.display_mode', '!=', 'historical_bridge')
             ->where('cp.display_mode', '!=', 'uncovered')
             ->where('spn.is_main_stream_node', 1)
-            ->where('crs.stream_role', '!=', 'historical_bridge')
+            ->whereIn('crs.stream_role', $strictlySecondaryRoles)
             ->count();
 
         $this->assertEquals(0, $illegallyExposed,
-            "{$illegallyExposed} required-window chapters are covered by main-stream nodes that are not historical_bridge. " .
-            "Required windows (poetry, fallbacks, epistolary) must remain secondary nodes.");
+            "{$illegallyExposed} required-window chapters are covered by main-stream nodes with strictly-secondary roles. " .
+            "Poetry, collections, genealogies and editorial contexts must remain secondary nodes.");
     }
 
     // ──────────────────────────────────────────────────────────────────────────

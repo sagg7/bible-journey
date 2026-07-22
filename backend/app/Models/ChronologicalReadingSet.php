@@ -11,6 +11,8 @@ class ChronologicalReadingSet extends Model
 {
     protected $fillable = [
         'source_map', 'era', 'era_slug', 'sort_key',
+        'approximate_date_start', 'approximate_date_end', 'date_confidence',
+        'approximate_year_start', 'approximate_year_end',
         'title_es', 'title_en',
         'placement_confidence', 'event_confidence', 'relation_confidence',
         'review_status', 'editorial_version',

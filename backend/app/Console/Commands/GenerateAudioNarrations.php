@@ -414,7 +414,11 @@ class GenerateAudioNarrations extends Command
 
                 $this->line(sprintf('  saved: %s %.1fs %s bytes', $path, $duration, $byteSize));
                 $this->line(sprintf('  segment cache: reused=%d generated=%d', $cacheHits, $cacheWrites));
-                $this->segmentCache->deleteRun($narration, $source);
+                try {
+                    $this->segmentCache->deleteRun($narration, $source);
+                } catch (Throwable $cleanupError) {
+                    $this->warn('  segment cache cleanup skipped: '.$cleanupError->getMessage());
+                }
             } finally {
                 @unlink($pcmPath);
                 if ($outputPath) {

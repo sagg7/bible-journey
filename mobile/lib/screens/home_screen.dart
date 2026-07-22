@@ -199,7 +199,9 @@ class _ContinueReadingCard extends ConsumerWidget {
           Container(
             height: 90,
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -212,15 +214,34 @@ class _ContinueReadingCard extends ConsumerWidget {
             ),
             child: Stack(
               children: [
-                Positioned(top: 18, left: 24, child: _AtmosphericDot(size: 2.5, opacity: 0.4)),
-                Positioned(top: 30, left: 60, child: _AtmosphericDot(size: 1.5, opacity: 0.25)),
-                Positioned(top: 12, left: 110, child: _AtmosphericDot(size: 2.0, opacity: 0.3)),
-                Positioned(top: 22, right: 80, child: _AtmosphericDot(size: 1.5, opacity: 0.2)),
+                Positioned(
+                  top: 18,
+                  left: 24,
+                  child: _AtmosphericDot(size: 2.5, opacity: 0.4),
+                ),
+                Positioned(
+                  top: 30,
+                  left: 60,
+                  child: _AtmosphericDot(size: 1.5, opacity: 0.25),
+                ),
+                Positioned(
+                  top: 12,
+                  left: 110,
+                  child: _AtmosphericDot(size: 2.0, opacity: 0.3),
+                ),
+                Positioned(
+                  top: 22,
+                  right: 80,
+                  child: _AtmosphericDot(size: 1.5, opacity: 0.2),
+                ),
                 Positioned(
                   top: 12,
                   left: 16,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: BjColors.accentPrimary.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(6),
@@ -245,7 +266,10 @@ class _ContinueReadingCard extends ConsumerWidget {
                     onTap: () => context.go('/leer'),
                     child: Text(
                       'Viendo: Lectura continua ▾',
-                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ),
@@ -327,19 +351,27 @@ class _BookmarkCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final progress = ref.watch(localProgressProvider).value;
-    if (progress == null || !progress.hasBookmark) return const SizedBox.shrink();
+    if (progress == null || !progress.hasBookmark) {
+      return const SizedBox.shrink();
+    }
 
     final isCrs = progress.bookmarkType == 'crs';
+    final hasVerse = progress.bookmarkVerse != null;
     final destination = isCrs
         ? '/crs/${progress.bookmarkPlanId}/${progress.bookmarkNodeId}'
-        : '/canonical/${progress.bookmarkOsisCode}/${progress.bookmarkChapter}';
+              '${hasVerse ? '?chapter=${progress.bookmarkChapter}&verse=${progress.bookmarkVerse}' : ''}'
+        : '/canonical/${progress.bookmarkOsisCode}/${progress.bookmarkChapter}'
+              '${hasVerse ? '?verse=${progress.bookmarkVerse}' : ''}';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: BjColors.accentBronze.withValues(alpha: 0.35), width: 0.5),
+        border: Border.all(
+          color: BjColors.accentBronze.withValues(alpha: 0.35),
+          width: 0.5,
+        ),
       ),
       child: Row(
         children: [
@@ -348,7 +380,11 @@ class _BookmarkCard extends ConsumerWidget {
           Expanded(
             child: Text(
               progress.bookmarkLabel ?? '',
-              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(
+                color: cs.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -407,7 +443,10 @@ class _EmptyReadingCard extends StatelessWidget {
 class _RouteProgressCard extends ConsumerWidget {
   final String planTitle;
   final int totalMainNodes;
-  const _RouteProgressCard({required this.planTitle, required this.totalMainNodes});
+  const _RouteProgressCard({
+    required this.planTitle,
+    required this.totalMainNodes,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -416,8 +455,11 @@ class _RouteProgressCard extends ConsumerWidget {
 
     if (auth == null) {
       final localAsync = ref.watch(localProgressProvider);
-      final completedCount = localAsync.valueOrNull?.completedBlockIds.length ?? 0;
-      final pct = totalMainNodes > 0 ? (completedCount / totalMainNodes).clamp(0.0, 1.0) : 0.0;
+      final completedCount =
+          localAsync.valueOrNull?.completedBlockIds.length ?? 0;
+      final pct = totalMainNodes > 0
+          ? (completedCount / totalMainNodes).clamp(0.0, 1.0)
+          : 0.0;
 
       return Container(
         padding: const EdgeInsets.all(16),
@@ -431,7 +473,11 @@ class _RouteProgressCard extends ConsumerWidget {
           children: [
             Text(
               planTitle,
-              style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 15),
+              style: TextStyle(
+                color: cs.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
             ),
             const SizedBox(height: 10),
             ClipRRect(
@@ -440,13 +486,19 @@ class _RouteProgressCard extends ConsumerWidget {
                 value: pct,
                 minHeight: 4,
                 backgroundColor: cs.outline,
-                valueColor: AlwaysStoppedAnimation<Color>(BjColors.accentPrimary),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  BjColors.accentPrimary,
+                ),
               ),
             ),
             const SizedBox(height: 10),
             Text(
               '$completedCount de $totalMainNodes lecturas completadas en este dispositivo.',
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12, height: 1.4),
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 2),
             GestureDetector(
@@ -469,8 +521,12 @@ class _RouteProgressCard extends ConsumerWidget {
 
     final summaryAsync = ref.watch(progressSummaryProvider);
     return summaryAsync.when(
-      loading: () => _ProgressSkeleton(routeTitle: planTitle, subtitle: 'Cargando…'),
-      error: (err, _) => _ProgressSkeleton(routeTitle: planTitle, subtitle: 'No se pudo cargar el progreso.'),
+      loading: () =>
+          _ProgressSkeleton(routeTitle: planTitle, subtitle: 'Cargando…'),
+      error: (err, _) => _ProgressSkeleton(
+        routeTitle: planTitle,
+        subtitle: 'No se pudo cargar el progreso.',
+      ),
       data: (summary) {
         final narrativePct = summary.narrative.percent / 100.0;
         final canonicalPct = summary.canonical.percent / 100.0;
@@ -487,21 +543,27 @@ class _RouteProgressCard extends ConsumerWidget {
             children: [
               Text(
                 planTitle,
-                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 15),
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
               ),
               const SizedBox(height: 12),
               _ProgressRow(
                 label: 'Progreso narrativo',
                 value: narrativePct,
                 color: BjColors.accentPrimary,
-                subtitle: '${summary.narrative.primaryComplete + summary.narrative.fullyComplete} de ${summary.narrative.total} acontecimientos',
+                subtitle:
+                    '${summary.narrative.primaryComplete + summary.narrative.fullyComplete} de ${summary.narrative.total} acontecimientos',
               ),
               const SizedBox(height: 10),
               _ProgressRow(
                 label: 'Cobertura bíblica',
                 value: canonicalPct,
                 color: BjColors.accentBronze,
-                subtitle: '${summary.canonical.completed} de ${summary.canonical.total} pasajes',
+                subtitle:
+                    '${summary.canonical.completed} de ${summary.canonical.total} pasajes',
               ),
             ],
           ),
@@ -529,11 +591,14 @@ class _HistoricalTimelineCard extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
     final eras = buildEras(nodes);
     if (eras.isEmpty) return const SizedBox.shrink();
 
-    final completed = ref.watch(localProgressProvider).valueOrNull?.completedBlockIds ??
+    final completed =
+        ref.watch(localProgressProvider).valueOrNull?.completedBlockIds ??
         const <int>{};
     final lastNodeId = ref.watch(localProgressProvider).valueOrNull?.lastNodeId;
 
@@ -552,7 +617,8 @@ class _HistoricalTimelineCard extends ConsumerWidget {
           final isLast = i == eras.length - 1;
 
           return GestureDetector(
-            onTap: () => context.push('/rutas/${slugifyEra(era.title)}', extra: era),
+            onTap: () =>
+                context.push('/rutas/${slugifyEra(era.title)}', extra: era),
             child: SizedBox(
               width: 96,
               child: Column(
@@ -562,13 +628,19 @@ class _HistoricalTimelineCard extends ConsumerWidget {
                       Expanded(
                         child: i == 0
                             ? const SizedBox()
-                            : Container(height: 2, color: cs.outline.withValues(alpha: 0.35)),
+                            : Container(
+                                height: 2,
+                                color: cs.outline.withValues(alpha: 0.35),
+                              ),
                       ),
                       _EraProgressDot(fraction: fraction, isCurrent: isCurrent),
                       Expanded(
                         child: isLast
                             ? const SizedBox()
-                            : Container(height: 2, color: cs.outline.withValues(alpha: 0.35)),
+                            : Container(
+                                height: 2,
+                                color: cs.outline.withValues(alpha: 0.35),
+                              ),
                       ),
                     ],
                   ),
@@ -626,7 +698,9 @@ class _EraProgressDot extends StatelessWidget {
             child: CircularProgressIndicator(
               value: fraction == 0 ? 1.0 : fraction,
               strokeWidth: 2.5,
-              backgroundColor: fraction == 0 ? cs.outline.withValues(alpha: 0.3) : null,
+              backgroundColor: fraction == 0
+                  ? cs.outline.withValues(alpha: 0.3)
+                  : null,
               valueColor: AlwaysStoppedAnimation(
                 fraction == 0 ? Colors.transparent : BjColors.accentPrimary,
               ),
@@ -671,10 +745,17 @@ class _ProgressRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11)),
+            Text(
+              label,
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+            ),
             Text(
               '${(value * 100).round()}%',
-              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -689,7 +770,10 @@ class _ProgressRow extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 3),
-        Text(subtitle, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10)),
+        Text(
+          subtitle,
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10),
+        ),
       ],
     );
   }
@@ -713,9 +797,19 @@ class _ProgressSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(routeTitle, style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 15)),
+          Text(
+            routeTitle,
+            style: TextStyle(
+              color: cs.onSurface,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+          Text(
+            subtitle,
+            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -753,7 +847,11 @@ class _ConnectionCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_stories_outlined, size: 14, color: BjColors.accentBronzeLight),
+              Icon(
+                Icons.auto_stories_outlined,
+                size: 14,
+                color: BjColors.accentBronzeLight,
+              ),
               const SizedBox(width: 6),
               Text(
                 'Modo de estudio',
@@ -768,7 +866,11 @@ class _ConnectionCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Profundiza en "${node.displayTitle}": contexto histórico, personajes, conexiones temáticas y preguntas para Ezra.',
-            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13, height: 1.55),
+            style: TextStyle(
+              color: cs.onSurfaceVariant,
+              fontSize: 13,
+              height: 1.55,
+            ),
           ),
           const SizedBox(height: 12),
           GestureDetector(
@@ -803,10 +905,16 @@ class _AccountButton extends ConsumerWidget {
           if (v == 'logout') {
             await ref.read(apiProvider).logout();
             await ref.read(authProvider.notifier).logout();
+          } else if (v == 'delete_account') {
+            await _confirmAndDeleteAccount(context, ref);
           }
         },
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'logout', child: Text('Cerrar sesión')),
+          PopupMenuItem(
+            value: 'delete_account',
+            child: Text('Eliminar cuenta', style: TextStyle(color: Colors.red)),
+          ),
         ],
       );
     }
@@ -815,6 +923,89 @@ class _AccountButton extends ConsumerWidget {
       tooltip: 'Cuenta',
       onPressed: () => context.push('/auth'),
     );
+  }
+
+  /// Flujo de eliminación de cuenta (requisito de Google Play): confirma con
+  /// la contraseña, borra en el servidor (DELETE /api/me — el progreso y los
+  /// destacados se eliminan; las preguntas a Ezra se anonimizan) y cierra la
+  /// sesión local.
+  Future<void> _confirmAndDeleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final passwordController = TextEditingController();
+    String? errorText;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setState) => AlertDialog(
+          title: const Text('Eliminar cuenta'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Esta acción es permanente: se borrarán tu cuenta, tu progreso '
+                'de lectura y tus versículos destacados. Las suscripciones se '
+                'gestionan por separado en la tienda.\n\n'
+                'Escribe tu contraseña para confirmar:',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  errorText: errorText,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                if (passwordController.text.isEmpty) {
+                  setState(() => errorText = 'Escribe tu contraseña');
+                  return;
+                }
+                try {
+                  await ref
+                      .read(apiProvider)
+                      .deleteAccount(passwordController.text);
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop(true);
+                  }
+                } on ApiException catch (e) {
+                  setState(
+                    () => errorText = e.status == 422
+                        ? 'Contraseña incorrecta'
+                        : 'No se pudo eliminar: ${e.message}',
+                  );
+                }
+              },
+              child: const Text('Eliminar definitivamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true) {
+      // La cuenta ya no existe en el servidor; limpia la sesión local.
+      await ref.read(authProvider.notifier).logout();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tu cuenta fue eliminada.')),
+        );
+      }
+    }
   }
 }
 
@@ -834,15 +1025,25 @@ class _ErrorView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.cloud_off,
+              size: 48,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 12),
-            const Text('No se pudo cargar el contenido.', textAlign: TextAlign.center),
+            const Text(
+              'No se pudo cargar el contenido.',
+              textAlign: TextAlign.center,
+            ),
             if (error != null) ...[
               const SizedBox(height: 8),
               Text(
                 error.toString(),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -850,7 +1051,10 @@ class _ErrorView extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               version.maybeWhen(data: (v) => 'Versión $v', orElse: () => ''),
-              style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

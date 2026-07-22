@@ -11,6 +11,7 @@ import '../core/auth.dart';
 import '../core/local_progress.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
+import '../core/verse_locator.dart';
 import '../models/models.dart';
 import '../widgets/bookmark_button.dart';
 import '../widgets/highlight_selection_bar.dart';
@@ -33,11 +34,15 @@ ReadingBlockV2? primaryBlock(CrsNodeDetail node) {
 class CrsReaderScreen extends ConsumerStatefulWidget {
   final int planId;
   final int nodeId;
+  final int? initialChapter;
+  final int? initialVerse;
 
   const CrsReaderScreen({
     super.key,
     required this.planId,
     required this.nodeId,
+    this.initialChapter,
+    this.initialVerse,
   });
 
   @override
@@ -46,13 +51,20 @@ class CrsReaderScreen extends ConsumerStatefulWidget {
 
 class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
   final ScrollController _scroll = ScrollController();
+  final VerseLocator _verseLocator = VerseLocator();
   final HighlightSelection _selection = HighlightSelection();
   bool _showDeepening = false;
   bool _focusMode = false;
+  VerseLocation? _currentVerseLocation;
+  int? _pendingInitialChapter;
+  int? _pendingInitialVerse;
+  bool _didInitialVerseScroll = false;
 
   @override
   void initState() {
     super.initState();
+    _pendingInitialChapter = widget.initialChapter;
+    _pendingInitialVerse = widget.initialVerse;
     _scroll.addListener(_onScroll);
     _selection.addListener(_onSelectionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,6 +72,20 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
           .read(localProgressProvider.notifier)
           .setLastNode(widget.planId, widget.nodeId);
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant CrsReaderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.nodeId != widget.nodeId ||
+        oldWidget.initialChapter != widget.initialChapter ||
+        oldWidget.initialVerse != widget.initialVerse) {
+      _currentVerseLocation = null;
+      _pendingInitialChapter = widget.initialChapter;
+      _pendingInitialVerse = widget.initialVerse;
+      _didInitialVerseScroll = false;
+      _showDeepening = false;
+    }
   }
 
   @override
@@ -73,11 +99,50 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 120) {
       if (!_showDeepening) setState(() => _showDeepening = true);
     }
+    _updateCurrentVerse();
   }
 
   void _onSelectionChanged() => setState(() {});
 
   void _toggleFocus() => setState(() => _focusMode = !_focusMode);
+
+  void _updateCurrentVerse() {
+    final location = _verseLocator.firstVisible();
+    if (location == null ||
+        (_currentVerseLocation?.chapter == location.chapter &&
+            _currentVerseLocation?.verse == location.verse)) {
+      return;
+    }
+
+    setState(() => _currentVerseLocation = location);
+  }
+
+  void _scheduleInitialVerseScroll(ReadingBlockDetail? detail) {
+    final targetVerse = _pendingInitialVerse;
+    if (_didInitialVerseScroll || targetVerse == null || detail == null) {
+      return;
+    }
+
+    final targetChapter = _pendingInitialChapter ?? detail.primaryChapter;
+    if (targetChapter == null) return;
+
+    final exists = detail.verses.any(
+      (v) => v.chapter == targetChapter && v.verse == targetVerse,
+    );
+    if (!exists) return;
+
+    _didInitialVerseScroll = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _verseLocator.scrollTo(targetChapter, targetVerse);
+      setState(
+        () => _currentVerseLocation = VerseLocation(
+          chapter: targetChapter,
+          verse: targetVerse,
+        ),
+      );
+    });
+  }
 
   void _swipeTo(
     BuildContext context,
@@ -237,8 +302,29 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
         ? ref.watch(readingBlockProvider(anchor.id))
         : null;
     final blockDetail = blockDetailAsync?.value;
+    final blockHighlights = blockDetail == null
+        ? <VerseHighlight>[]
+        : ref
+                  .watch(
+                    chapterHighlightsProvider((
+                      blockDetail.bookOsisCode ?? '',
+                      blockDetail.primaryChapter ?? 0,
+                    )),
+                  )
+                  .value ??
+              [];
+    _scheduleInitialVerseScroll(blockDetail);
     final audioNarration =
         blockDetail?.audioNarration ?? anchor?.audioNarration;
+    final firstVerse = blockDetail?.verses.firstOrNull;
+    final bookmarkLocation =
+        _currentVerseLocation ??
+        (firstVerse == null
+            ? null
+            : VerseLocation(
+                chapter: firstVerse.chapter,
+                verse: firstVerse.verse,
+              ));
 
     return GestureDetector(
       onTap: _focusMode ? _toggleFocus : null,
@@ -262,6 +348,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
                 bg,
                 textColor,
                 anchor?.displayReference,
+                bookmarkLocation,
               ),
         body: Stack(
           children: [
@@ -349,6 +436,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
                       isDark: isDark,
                       s: s,
                       selection: _selection,
+                      verseLocator: _verseLocator,
                     ),
                   ),
 
@@ -398,6 +486,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
                   verses: blockDetail.verses,
                   translationCode: blockDetail.translationCode,
                   selection: _selection,
+                  existingHighlights: blockHighlights,
                   onSaved: () => setState(_selection.clear),
                   onCancel: () => setState(_selection.clear),
                 ),
@@ -416,6 +505,7 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
     Color? backgroundColor,
     Color? foregroundColor,
     String? anchorReference,
+    VerseLocation? bookmarkLocation,
   ]) {
     final theme = Theme.of(context);
     final appBarForeground =
@@ -453,9 +543,13 @@ class _CrsReaderScreenState extends ConsumerState<CrsReaderScreen> {
       actions: [
         BookmarkButton.crs(
           color: appBarForeground.withValues(alpha: 0.75),
-          label: node.crs.titleEs,
+          label: bookmarkLocation == null
+              ? node.crs.titleEs
+              : '${node.crs.titleEs} - ${bookmarkLocation.chapter}',
           planId: widget.planId,
           nodeId: widget.nodeId,
+          chapter: bookmarkLocation?.chapter,
+          verse: bookmarkLocation?.verse,
         ),
         TextZoomButton(color: appBarForeground.withValues(alpha: 0.75)),
         if (node.compareGroup != null)
@@ -966,6 +1060,7 @@ class _ScriptureBody extends ConsumerWidget {
   final bool isDark;
   final AppStrings s;
   final HighlightSelection selection;
+  final VerseLocator verseLocator;
 
   const _ScriptureBody({
     required this.block,
@@ -974,6 +1069,7 @@ class _ScriptureBody extends ConsumerWidget {
     required this.isDark,
     required this.s,
     required this.selection,
+    required this.verseLocator,
   });
 
   @override
@@ -1034,17 +1130,29 @@ class _ScriptureBody extends ConsumerWidget {
               const SizedBox(height: 16),
               ...detail.verses.expand((v) {
                 final selected = selection.contains(v.verse);
-                final savedHex = highlights
-                    .where((h) => h.containsVerse(v.verse))
-                    .map((h) => h.color.hex)
+                final savedHighlight = highlights
+                    .where(
+                      (h) => h.chapter == v.chapter && h.containsVerse(v.verse),
+                    )
                     .firstOrNull;
+                final savedHex = savedHighlight?.color.hex;
 
                 final showChapterHeading =
                     spansMultipleChapters && v.chapter != lastChapterShown;
                 if (showChapterHeading) lastChapterShown = v.chapter;
 
                 final verseTile = GestureDetector(
-                  onLongPress: () => selection.beginAt(v.verse),
+                  key: verseLocator.keyFor(v.chapter, v.verse),
+                  onLongPress: () {
+                    if (savedHighlight == null) {
+                      selection.beginAt(v.verse);
+                    } else {
+                      selection.selectRange(
+                        savedHighlight.verseStart,
+                        savedHighlight.verseEnd,
+                      );
+                    }
+                  },
                   onTap: selection.isActive
                       ? () => selection.extendTo(v.verse)
                       : null,

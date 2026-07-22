@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\DB;
 
 class NormalizeStreamPlanSequence extends Command
 {
-    protected $signature = 'stream-plans:normalize-sequence {planId} {--dry-run}';
+    use \App\Console\Commands\Concerns\GuardsPublishedPlans;
+
+    protected $signature = 'stream-plans:normalize-sequence {planId} {--dry-run} {--force-published}';
 
     protected $description = 'Normalize published stream rank for linked Psalms and NT letters/missions';
 
@@ -19,6 +21,10 @@ class NormalizeStreamPlanSequence extends Command
     {
         $planId = (int) $this->argument('planId');
         $dryRun = (bool) $this->option('dry-run');
+
+        if (! $dryRun && ! $this->assertPlanIsMutable($planId, (bool) $this->option('force-published'))) {
+            return self::FAILURE;
+        }
 
         $nodes = StreamPlanNode::where('plan_id', $planId)
             ->with('crs.blocks')

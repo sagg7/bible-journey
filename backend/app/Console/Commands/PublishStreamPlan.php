@@ -131,6 +131,21 @@ class PublishStreamPlan extends Command
         }
         $this->info("  ✓ Plan #{$planId} published, Plan #{$currentPlan?->id} archived.");
 
+        // ── Step 5b: Migrate real user progress (blocks + node states) ────────
+        if (! $this->option('skip-migration') && $currentPlan) {
+            $this->line("Step 4b/7 — Migrating user progress (Plan #{$currentPlan->id} → #{$planId})…");
+            $migrateExit = Artisan::call('stream-plans:migrate-progress', [
+                'from_plan_id' => $currentPlan->id,
+                'to_plan_id'   => $planId,
+            ]);
+            $this->line(Artisan::output());
+            if ($migrateExit !== 0) {
+                $this->warn('  ⚠ Migración de progreso con registros sin mapeo — revisar antes de dar por buena la publicación.');
+            } else {
+                $this->info('  ✓ Progreso de usuarios migrado.');
+            }
+        }
+
         // ── Step 6: Invalidate cache ──────────────────────────────────────────
         $this->line('Step 5/7 — Invalidating stream plan cache…');
         Cache::forget('stream_plan_active');

@@ -18,3 +18,14 @@ Route::get('/instituciones/gracias', function () {
 Route::get('/privacy', function () {
     return view('privacy');
 });
+
+Route::get('/terms', function () {
+    return view('terms');
+});
+
+// Página de solicitud de eliminación de cuenta (requisito de Google Play:
+// recurso web además del flujo in-app). Declarar esta URL en Data Safety.
+Route::get('/eliminar-cuenta', function () {
+    return view('account-deletion');
+});
+Route::redirect('/delete-account', '/eliminar-cuenta');

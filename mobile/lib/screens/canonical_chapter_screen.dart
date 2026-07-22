@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/api.dart';
 import '../core/local_progress.dart';
 import '../core/theme.dart';
+import '../core/verse_locator.dart';
 import '../models/models.dart';
 import '../widgets/bookmark_button.dart';
 import '../widgets/highlight_selection_bar.dart';
@@ -14,11 +15,13 @@ import '../widgets/text_zoom_sheet.dart';
 class CanonicalChapterScreen extends ConsumerStatefulWidget {
   final String osisCode;
   final int chapter;
+  final int? initialVerse;
 
   const CanonicalChapterScreen({
     super.key,
     required this.osisCode,
     required this.chapter,
+    this.initialVerse,
   });
 
   @override
@@ -29,12 +32,19 @@ class CanonicalChapterScreen extends ConsumerStatefulWidget {
 class _CanonicalChapterScreenState
     extends ConsumerState<CanonicalChapterScreen> {
   late int _currentChapter;
+  late final ScrollController _scroll;
+  final VerseLocator _verseLocator = VerseLocator();
   final HighlightSelection _selection = HighlightSelection();
+  int? _currentVerse;
+  int? _pendingInitialVerse;
+  bool _didInitialVerseScroll = false;
 
   @override
   void initState() {
     super.initState();
     _currentChapter = widget.chapter;
+    _scroll = ScrollController()..addListener(_updateCurrentVerse);
+    _pendingInitialVerse = widget.initialVerse;
     _selection.addListener(_onSelectionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
@@ -44,7 +54,23 @@ class _CanonicalChapterScreenState
   }
 
   @override
+  void didUpdateWidget(covariant CanonicalChapterScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.osisCode != widget.osisCode ||
+        oldWidget.chapter != widget.chapter ||
+        oldWidget.initialVerse != widget.initialVerse) {
+      _selection.clear();
+      _currentChapter = widget.chapter;
+      _currentVerse = null;
+      _pendingInitialVerse = widget.initialVerse;
+      _didInitialVerseScroll = false;
+    }
+  }
+
+  @override
   void dispose() {
+    _scroll.removeListener(_updateCurrentVerse);
+    _scroll.dispose();
     _selection.removeListener(_onSelectionChanged);
     super.dispose();
   }
@@ -53,10 +79,39 @@ class _CanonicalChapterScreenState
 
   void _goChapter(int chapter) {
     _selection.clear();
-    setState(() => _currentChapter = chapter);
+    setState(() {
+      _currentChapter = chapter;
+      _currentVerse = null;
+      _pendingInitialVerse = null;
+      _didInitialVerseScroll = true;
+    });
     ref
         .read(localProgressProvider.notifier)
         .setLastCanonical(widget.osisCode, chapter);
+  }
+
+  void _updateCurrentVerse() {
+    final location = _verseLocator.firstVisible();
+    if (location == null || location.chapter != _currentChapter) return;
+    if (location.verse == _currentVerse) return;
+    setState(() => _currentVerse = location.verse);
+  }
+
+  void _scheduleInitialVerseScroll(CanonicalChapterContent content) {
+    final target = _pendingInitialVerse;
+    if (_didInitialVerseScroll ||
+        target == null ||
+        content.chapter != _currentChapter) {
+      return;
+    }
+    if (!content.verses.any((v) => v.verse == target)) return;
+
+    _didInitialVerseScroll = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _verseLocator.scrollTo(content.chapter, target);
+      setState(() => _currentVerse = target);
+    });
   }
 
   @override
@@ -95,27 +150,41 @@ class _CanonicalChapterScreenState
             ],
           ),
         ),
-        data: (content) => Stack(
-          children: [
-            _buildContent(context, content, textColor, isDark, bg),
-            if (_selection.isActive)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: HighlightSelectionBar(
-                  bookOsisCode: widget.osisCode,
-                  bookNameEs: content.bookNameEs,
-                  chapter: _currentChapter,
-                  verses: content.verses,
-                  translationCode: content.translationCode,
-                  selection: _selection,
-                  onSaved: () => setState(_selection.clear),
-                  onCancel: () => setState(_selection.clear),
+        data: (content) {
+          final highlights =
+              ref
+                  .watch(
+                    chapterHighlightsProvider((
+                      widget.osisCode,
+                      _currentChapter,
+                    )),
+                  )
+                  .value ??
+              [];
+
+          return Stack(
+            children: [
+              _buildContent(context, content, textColor, isDark, bg),
+              if (_selection.isActive)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: HighlightSelectionBar(
+                    bookOsisCode: widget.osisCode,
+                    bookNameEs: content.bookNameEs,
+                    chapter: _currentChapter,
+                    verses: content.verses,
+                    translationCode: content.translationCode,
+                    selection: _selection,
+                    existingHighlights: highlights,
+                    onSaved: () => setState(_selection.clear),
+                    onCancel: () => setState(_selection.clear),
+                  ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -139,8 +208,14 @@ class _CanonicalChapterScreenState
             )
             .value ??
         [];
+    _scheduleInitialVerseScroll(content);
+    final bookmarkVerse =
+        _currentVerse ??
+        _pendingInitialVerse ??
+        content.verses.firstOrNull?.verse;
     return PinchZoomListener(
       child: CustomScrollView(
+        controller: _scroll,
         slivers: [
           SliverAppBar(
             backgroundColor: backgroundColor,
@@ -175,6 +250,7 @@ class _CanonicalChapterScreenState
                 label: '${content.bookNameEs} ${content.chapter}',
                 osisCode: widget.osisCode,
                 chapter: content.chapter,
+                verse: bookmarkVerse,
               ),
               TextZoomButton(color: textColor.withValues(alpha: 0.7)),
               if (content.translationCode != null)
@@ -264,14 +340,26 @@ class _CanonicalChapterScreenState
                 delegate: SliverChildBuilderDelegate((_, i) {
                   final v = content.verses[i];
                   final selected = _selection.contains(v.verse);
-                  final savedHex = highlights
-                      .where((h) => h.containsVerse(v.verse))
-                      .map((h) => h.color.hex)
+                  final savedHighlight = highlights
+                      .where(
+                        (h) =>
+                            h.chapter == v.chapter && h.containsVerse(v.verse),
+                      )
                       .firstOrNull;
+                  final savedHex = savedHighlight?.color.hex;
 
                   return GestureDetector(
-                    onLongPress: () =>
-                        setState(() => _selection.beginAt(v.verse)),
+                    key: _verseLocator.keyFor(v.chapter, v.verse),
+                    onLongPress: () => setState(() {
+                      if (savedHighlight == null) {
+                        _selection.beginAt(v.verse);
+                      } else {
+                        _selection.selectRange(
+                          savedHighlight.verseStart,
+                          savedHighlight.verseEnd,
+                        );
+                      }
+                    }),
                     onTap: _selection.isActive
                         ? () => setState(() => _selection.extendTo(v.verse))
                         : null,

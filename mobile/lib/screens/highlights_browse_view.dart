@@ -17,7 +17,9 @@ class HighlightsBrowseView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
     final cs = Theme.of(context).colorScheme;
 
     if (ref.watch(authProvider) == null) {
@@ -27,7 +29,11 @@ class HighlightsBrowseView extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.brush_outlined, size: 40, color: textColor.withValues(alpha: 0.3)),
+              Icon(
+                Icons.brush_outlined,
+                size: 40,
+                color: textColor.withValues(alpha: 0.3),
+              ),
               const SizedBox(height: 12),
               Text(
                 'Inicia sesión para guardar y ver tus subrayados en todos tus dispositivos.',
@@ -55,7 +61,10 @@ class HighlightsBrowseView extends ConsumerWidget {
           children: [
             const Icon(Icons.cloud_off, size: 40),
             const SizedBox(height: 8),
-            Text('No se pudo cargar.', style: TextStyle(color: cs.onSurfaceVariant)),
+            Text(
+              'No se pudo cargar.',
+              style: TextStyle(color: cs.onSurfaceVariant),
+            ),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: () => ref.invalidate(highlightColorsProvider),
@@ -104,9 +113,16 @@ class _ColorSectionState extends ConsumerState<_ColorSection> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Nombrar este color'),
-        content: TextField(controller: controller, autofocus: true, maxLength: 60),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 60,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
             child: const Text('Guardar'),
@@ -122,7 +138,9 @@ class _ColorSectionState extends ConsumerState<_ColorSection> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,18 +162,35 @@ class _ColorSectionState extends ConsumerState<_ColorSection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    widget.color.label?.isNotEmpty == true ? widget.color.label! : 'Sin nombre',
-                    style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15),
+                    widget.color.label?.isNotEmpty == true
+                        ? widget.color.label!
+                        : 'Sin nombre',
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
-                Text('${widget.color.count}',
-                    style: TextStyle(color: textColor.withValues(alpha: 0.4), fontSize: 12)),
+                Text(
+                  '${widget.color.count}',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.4),
+                    fontSize: 12,
+                  ),
+                ),
                 IconButton(
-                  icon: Icon(Icons.edit_outlined, size: 18, color: textColor.withValues(alpha: 0.5)),
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: textColor.withValues(alpha: 0.5),
+                  ),
                   onPressed: () => _rename(context),
                 ),
-                Icon(_expanded ? Icons.expand_less : Icons.expand_more,
-                    color: textColor.withValues(alpha: 0.4)),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: textColor.withValues(alpha: 0.4),
+                ),
               ],
             ),
           ),
@@ -171,11 +206,41 @@ class _VerseList extends ConsumerWidget {
   final int colorId;
   const _VerseList({required this.colorId});
 
+  Future<void> _deleteHighlight(
+    BuildContext context,
+    WidgetRef ref,
+    VerseHighlight highlight,
+  ) async {
+    try {
+      await ref.read(apiProvider).deleteHighlight(highlight.id);
+      ref.invalidate(highlightsByColorProvider(colorId));
+      ref.invalidate(highlightColorsProvider);
+      ref.invalidate(allHighlightsProvider);
+      ref.invalidate(
+        chapterHighlightsProvider((highlight.bookOsisCode, highlight.chapter)),
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Subrayado quitado.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo quitar: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final versesAsync = ref.watch(highlightsByColorProvider(colorId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
 
     return versesAsync.when(
       loading: () => const Padding(
@@ -187,28 +252,56 @@ class _VerseList extends ConsumerWidget {
         if (verses.isEmpty) {
           return Padding(
             padding: const EdgeInsets.fromLTRB(52, 0, 16, 12),
-            child: Text('Sin versículos.', style: TextStyle(color: textColor.withValues(alpha: 0.4))),
+            child: Text(
+              'Sin versículos.',
+              style: TextStyle(color: textColor.withValues(alpha: 0.4)),
+            ),
           );
         }
         return Column(
           children: verses
-              .map((v) => InkWell(
-                    onTap: () => context.push('/canonical/${v.bookOsisCode}/${v.chapter}'),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(52, 8, 16, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${v.bookNameEs} ${v.chapter}:${v.verseStart == v.verseEnd ? v.verseStart : '${v.verseStart}-${v.verseEnd}'}',
-                              style: TextStyle(color: textColor.withValues(alpha: 0.8), fontSize: 13),
+              .map(
+                (v) => InkWell(
+                  onTap: () =>
+                      context.push('/canonical/${v.bookOsisCode}/${v.chapter}'),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(52, 8, 16, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${v.bookNameEs} ${v.chapter}:${v.verseStart == v.verseEnd ? v.verseStart : '${v.verseStart}-${v.verseEnd}'}',
+                            style: TextStyle(
+                              color: textColor.withValues(alpha: 0.8),
+                              fontSize: 13,
                             ),
                           ),
-                          Icon(Icons.chevron_right, size: 16, color: textColor.withValues(alpha: 0.3)),
-                        ],
-                      ),
+                        ),
+                        IconButton(
+                          tooltip: 'Quitar subrayado',
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 36,
+                            height: 36,
+                          ),
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          onPressed: () => _deleteHighlight(context, ref, v),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: textColor.withValues(alpha: 0.3),
+                        ),
+                      ],
                     ),
-                  ))
+                  ),
+                ),
+              )
               .toList(),
         );
       },

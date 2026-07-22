@@ -11,12 +11,17 @@ use Illuminate\Support\Carbon;
 class RevenueCatWebhookController extends Controller
 {
     private const ACTIVE_EVENTS = ['INITIAL_PURCHASE', 'RENEWAL', 'UNCANCELLATION', 'PRODUCT_CHANGE', 'TRANSFER'];
-    private const INACTIVE_EVENTS = ['EXPIRATION', 'CANCELLATION'];
+
+    // Solo EXPIRATION termina el acceso. CANCELLATION significa "apagó la
+    // auto-renovación": el usuario pagó hasta expiration_at y conserva premium
+    // hasta entonces (hasPremiumAccess() ya valida subscription_expires_at).
+    private const INACTIVE_EVENTS = ['EXPIRATION'];
 
     public function handle(Request $request): JsonResponse
     {
         $secret = config('services.revenuecat.webhook_secret');
-        if (! $secret || $request->header('Authorization') !== $secret) {
+        $header = (string) $request->header('Authorization', '');
+        if (! $secret || ! hash_equals((string) $secret, $header)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -35,8 +40,22 @@ class RevenueCatWebhookController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        $user = User::where('revenuecat_customer_id', $appUserId)
-            ->orWhere('id', $appUserId)
+        // Buscar por id solo cuando app_user_id es estrictamente numérico:
+        // MySQL castea '15-legacy' a 15 en comparaciones bigint=string, lo que
+        // podría acreditar la suscripción al usuario equivocado.
+        $aliases = is_array($event['aliases'] ?? null) ? $event['aliases'] : [];
+        $candidateIds = array_values(array_unique(array_filter([
+            $appUserId,
+            ...$aliases,
+            ...(is_array($transferredTo) ? $transferredTo : []),
+        ], fn ($id) => is_string($id) || is_int($id))));
+        $numericIds = array_map(
+            'intval',
+            array_filter($candidateIds, fn ($id) => ctype_digit((string) $id))
+        );
+
+        $user = User::whereIn('revenuecat_customer_id', $candidateIds)
+            ->when(! empty($numericIds), fn ($q) => $q->orWhereIn('id', $numericIds))
             ->first();
 
         if (! $user) {
@@ -45,7 +64,9 @@ class RevenueCatWebhookController extends Controller
         }
 
         if (! $user->revenuecat_customer_id) {
-            $user->revenuecat_customer_id = $appUserId;
+            $identifiedId = collect($candidateIds)
+                ->first(fn ($id) => ctype_digit((string) $id) && (int) $id === $user->id);
+            $user->revenuecat_customer_id = (string) ($identifiedId ?? $appUserId);
         }
 
         if (in_array($type, self::ACTIVE_EVENTS, true)) {
@@ -56,6 +77,12 @@ class RevenueCatWebhookController extends Controller
         } elseif (in_array($type, self::INACTIVE_EVENTS, true)) {
             $user->subscription_status = 'free';
             $user->subscription_expires_at = null;
+        } elseif ($type === 'CANCELLATION') {
+            // No-op deliberado: conserva premium hasta subscription_expires_at.
+            // Si RevenueCat envía una expiración actualizada, respétala.
+            if (! empty($event['expiration_at_ms'])) {
+                $user->subscription_expires_at = Carbon::createFromTimestampMs($event['expiration_at_ms']);
+            }
         } else {
             report(new \RuntimeException("RevenueCat webhook: unhandled event type={$type}"));
         }

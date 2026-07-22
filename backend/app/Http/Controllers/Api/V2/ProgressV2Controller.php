@@ -161,7 +161,11 @@ class ProgressV2Controller extends Controller
                 [
                     'state'                => $state,
                     'started_at'           => $existingEvent->started_at ?? now(),
-                    'primary_completed_at' => $existingEvent->primary_completed_at ?? now(),
+                    // Solo narrative_complete implica que el ancla fue leída;
+                    // deferred/in_progress no deben sellar la marca de tiempo.
+                    'primary_completed_at' => $state === 'narrative_complete'
+                        ? ($existingEvent->primary_completed_at ?? now())
+                        : $existingEvent?->primary_completed_at,
                 ]
             );
         });

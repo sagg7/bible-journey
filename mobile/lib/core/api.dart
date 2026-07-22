@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../models/models.dart';
 import 'auth.dart';
+import 'offline_cache.dart';
 
 /// URL base de la API. En el emulador de Android, el host es 10.0.2.2.
 /// Sobrescribe con --dart-define=API_BASE_URL=...
@@ -16,18 +18,24 @@ const String apiBaseUrl = String.fromEnvironment(
 
 /// Llaves públicas del SDK de RevenueCat (una por tienda).
 /// Sobrescribe con --dart-define=REVENUECAT_API_KEY_ANDROID=... / _IOS=...
-const String _revenueCatApiKeyAndroid = String.fromEnvironment('REVENUECAT_API_KEY_ANDROID');
-const String _revenueCatApiKeyIos = String.fromEnvironment('REVENUECAT_API_KEY_IOS');
+const String _revenueCatApiKeyAndroid = String.fromEnvironment(
+  'REVENUECAT_API_KEY_ANDROID',
+);
+const String _revenueCatApiKeyIos = String.fromEnvironment(
+  'REVENUECAT_API_KEY_IOS',
+);
+
+String get _revenueCatApiKey => defaultTargetPlatform == TargetPlatform.iOS
+    ? _revenueCatApiKeyIos
+    : _revenueCatApiKeyAndroid;
+
+bool get isRevenueCatConfigured => !kIsWeb && _revenueCatApiKey.isNotEmpty;
 
 /// Inicializa el SDK de RevenueCat. No-op en web (no hay compras in-app) o
 /// si no se pasó la llave correspondiente por --dart-define.
 Future<void> configureRevenueCat() async {
-  if (kIsWeb) return;
-  final apiKey = defaultTargetPlatform == TargetPlatform.iOS
-      ? _revenueCatApiKeyIos
-      : _revenueCatApiKeyAndroid;
-  if (apiKey.isEmpty) return;
-  await Purchases.configure(PurchasesConfiguration(apiKey));
+  if (!isRevenueCatConfigured) return;
+  await Purchases.configure(PurchasesConfiguration(_revenueCatApiKey));
 }
 
 /// Versión y número de compilación instalados (ej. "1.0.0 (2)"), leídos del
@@ -58,25 +66,38 @@ class ApiClient {
   late final Dio _dio;
 
   ApiClient(this.ref) {
-    _dio = Dio(BaseOptions(
-      baseUrl: apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 65),
-      headers: {'Accept': 'application/json'},
-    ));
-    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      options.headers['X-Locale'] = ref.read(localeProvider);
-      final token = ref.read(authProvider);
-      if (token != null) options.headers['Authorization'] = 'Bearer $token';
-      handler.next(options);
-    }));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: apiBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 65),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          options.headers['X-Locale'] = ref.read(localeProvider);
+          final token = ref.read(authProvider);
+          if (token != null) options.headers['Authorization'] = 'Bearer $token';
+          handler.next(options);
+        },
+      ),
+    );
+    // Lectura offline: sirve la última copia guardada cuando la red falla.
+    _dio.interceptors.add(OfflineCacheInterceptor());
   }
 
   Never _fail(Object e) {
     if (e is DioException) {
       final status = e.response?.statusCode;
-      final msg = e.response?.data is Map ? (e.response?.data['message'] ?? '') : '';
-      throw ApiException(msg.toString().isNotEmpty ? msg.toString() : 'Error de red', status);
+      final msg = e.response?.data is Map
+          ? (e.response?.data['message'] ?? '')
+          : '';
+      throw ApiException(
+        msg.toString().isNotEmpty ? msg.toString() : 'Error de red',
+        status,
+      );
     }
     throw ApiException(e.toString());
   }
@@ -89,15 +110,24 @@ class ApiClient {
   Future<List<BibleTranslationOption>> translations() async {
     try {
       final r = await _dio.get('/translations', queryParameters: _q());
-      return (r.data['data'] as List).map((e) => BibleTranslationOption.fromJson(e)).toList();
+      return (r.data['data'] as List)
+          .map((e) => BibleTranslationOption.fromJson(e))
+          .toList();
     } catch (e) {
       _fail(e);
     }
   }
 
-  Future<Map<String, dynamic>> register(String name, String email, String password) async {
+  Future<Map<String, dynamic>> register(
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
-      final r = await _dio.post('/register', data: {'name': name, 'email': email, 'password': password});
+      final r = await _dio.post(
+        '/register',
+        data: {'name': name, 'email': email, 'password': password},
+      );
       return r.data as Map<String, dynamic>;
     } catch (e) {
       _fail(e);
@@ -106,7 +136,10 @@ class ApiClient {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final r = await _dio.post('/login', data: {'email': email, 'password': password});
+      final r = await _dio.post(
+        '/login',
+        data: {'email': email, 'password': password},
+      );
       return r.data as Map<String, dynamic>;
     } catch (e) {
       _fail(e);
@@ -119,6 +152,16 @@ class ApiClient {
     } catch (_) {} // best-effort: siempre limpiamos el token local
   }
 
+  /// Elimina la cuenta y todos los datos personales del servidor.
+  /// Requiere la contraseña actual como confirmación (DELETE /api/me).
+  Future<void> deleteAccount(String password) async {
+    try {
+      await _dio.delete('/me', data: {'password': password});
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
   Future<MeProfile> me() async {
     try {
       final r = await _dio.get('/me');
@@ -128,10 +171,15 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> completeEvent(String routeSlug, String eventSlug) async {
+  Future<Map<String, dynamic>> completeEvent(
+    String routeSlug,
+    String eventSlug,
+  ) async {
     try {
-      final r = await _dio.post('/me/progress/complete',
-          data: {'route_slug': routeSlug, 'event_slug': eventSlug});
+      final r = await _dio.post(
+        '/me/progress/complete',
+        data: {'route_slug': routeSlug, 'event_slug': eventSlug},
+      );
       return r.data['data'] as Map<String, dynamic>;
     } catch (e) {
       _fail(e);
@@ -140,10 +188,18 @@ class ApiClient {
 
   // ─── API v2 methods ─────────────────────────────────────────────────────
 
-  Future<StreamPlanSummary> streamPlan({String planId = 'active', String profile = 'cautious_default'}) async {
+  Future<StreamPlanSummary> streamPlan({
+    String planId = 'active',
+    String profile = 'cautious_default',
+  }) async {
     try {
-      final r = await _dio.get('/v2/stream-plans/$planId',
-          queryParameters: {'profile': profile, 'locale': ref.read(localeProvider)});
+      final r = await _dio.get(
+        '/v2/stream-plans/$planId',
+        queryParameters: {
+          'profile': profile,
+          'locale': ref.read(localeProvider),
+        },
+      );
       return StreamPlanSummary.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -153,12 +209,11 @@ class ApiClient {
   Future<CrsNodeDetail> crsNode(int planId, int nodeId) async {
     try {
       final q = _q()
-        ..addAll({
-          'audio_translation': 'NVI',
-          'audio_voice': 'Charon',
-        });
-      final r = await _dio.get('/v2/stream-plans/$planId/nodes/$nodeId',
-          queryParameters: q);
+        ..addAll({'audio_translation': 'NVI', 'audio_voice': 'Charon'});
+      final r = await _dio.get(
+        '/v2/stream-plans/$planId/nodes/$nodeId',
+        queryParameters: q,
+      );
       return CrsNodeDetail.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -174,10 +229,18 @@ class ApiClient {
     }
   }
 
-  Future<PassageText> passageText(int blockId, {String translation = 'WEB'}) async {
+  Future<PassageText> passageText(
+    int blockId, {
+    String translation = 'WEB',
+  }) async {
     try {
-      final r = await _dio.get('/v2/passages/block/$blockId',
-          queryParameters: {'translation': translation, 'locale': ref.read(localeProvider)});
+      final r = await _dio.get(
+        '/v2/passages/block/$blockId',
+        queryParameters: {
+          'translation': translation,
+          'locale': ref.read(localeProvider),
+        },
+      );
       return PassageText.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -186,8 +249,10 @@ class ApiClient {
 
   Future<bool> markBlockProgress(int blockId, int planId, String status) async {
     try {
-      await _dio.post('/v2/progress/blocks/$blockId',
-          data: {'status': status, 'plan_id': planId});
+      await _dio.post(
+        '/v2/progress/blocks/$blockId',
+        data: {'status': status, 'plan_id': planId},
+      );
       return true;
     } catch (e) {
       _fail(e);
@@ -196,8 +261,10 @@ class ApiClient {
 
   Future<bool> markNodeState(int nodeId, int planId, String state) async {
     try {
-      await _dio.post('/v2/progress/nodes/$nodeId',
-          data: {'state': state, 'plan_id': planId});
+      await _dio.post(
+        '/v2/progress/nodes/$nodeId',
+        data: {'state': state, 'plan_id': planId},
+      );
       return true;
     } catch (e) {
       _fail(e);
@@ -206,22 +273,29 @@ class ApiClient {
 
   Future<ProgressSummary> progressSummary({int? planId}) async {
     try {
-      final r = await _dio.get('/v2/progress/summary',
-          queryParameters: planId != null ? {'plan_id': planId} : null);
+      final r = await _dio.get(
+        '/v2/progress/summary',
+        queryParameters: planId != null ? {'plan_id': planId} : null,
+      );
       return ProgressSummary.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
     }
   }
 
-  Future<EzraStructuredResponse> askEzraV2(String question, {int? nodeId, int? planId}) async {
+  Future<EzraStructuredResponse> askEzraV2(
+    String question, {
+    int? nodeId,
+    int? planId,
+  }) async {
     try {
-      final r = await _dio.post('/v2/ezra/answer', data: {
-        'question': question,
-        'node_id': ?nodeId,
-        'plan_id': ?planId,
-      });
-      return EzraStructuredResponse.fromJson(r.data['data'] as Map<String, dynamic>);
+      final r = await _dio.post(
+        '/v2/ezra/answer',
+        data: {'question': question, 'node_id': ?nodeId, 'plan_id': ?planId},
+      );
+      return EzraStructuredResponse.fromJson(
+        r.data['data'] as Map<String, dynamic>,
+      );
     } catch (e) {
       _fail(e);
     }
@@ -232,23 +306,30 @@ class ApiClient {
   Future<ReadingBlockDetail> readingBlock(int blockId) async {
     try {
       final translation = ref.read(translationProvider) ?? 'RVA1909';
-      final r = await _dio.get('/readings/$blockId',
-          queryParameters: {
-            'translation': translation,
-            'audio_translation': 'NVI',
-            'audio_voice': 'Charon',
-          });
+      final r = await _dio.get(
+        '/readings/$blockId',
+        queryParameters: {
+          'translation': translation,
+          'audio_translation': 'NVI',
+          'audio_voice': 'Charon',
+        },
+      );
       return ReadingBlockDetail.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
     }
   }
 
-  Future<CanonicalChapterContent> canonicalChapter(String osisCode, int chapter) async {
+  Future<CanonicalChapterContent> canonicalChapter(
+    String osisCode,
+    int chapter,
+  ) async {
     try {
       final translation = ref.read(translationProvider) ?? 'RVA1909';
-      final r = await _dio.get('/readings/book/$osisCode/chapter/$chapter',
-          queryParameters: {'translation': translation});
+      final r = await _dio.get(
+        '/readings/book/$osisCode/chapter/$chapter',
+        queryParameters: {'translation': translation},
+      );
       return CanonicalChapterContent.fromJson(r.data as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -257,13 +338,20 @@ class ApiClient {
 
   // ─── Verse highlights (/api/v2/highlights, requires session) ────────────
 
-  Future<List<VerseHighlight>> highlights({String? book, int? chapter, int? colorId}) async {
+  Future<List<VerseHighlight>> highlights({
+    String? book,
+    int? chapter,
+    int? colorId,
+  }) async {
     try {
-      final r = await _dio.get('/v2/highlights', queryParameters: {
-        if (book != null) 'book': book,
-        if (chapter != null) 'chapter': chapter,
-        if (colorId != null) 'color_id': colorId,
-      });
+      final r = await _dio.get(
+        '/v2/highlights',
+        queryParameters: {
+          'book': ?book,
+          'chapter': ?chapter,
+          'color_id': ?colorId,
+        },
+      );
       return ((r.data['data'] as List?) ?? [])
           .map((e) => VerseHighlight.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -281,14 +369,17 @@ class ApiClient {
     String? label,
   }) async {
     try {
-      final r = await _dio.post('/v2/highlights', data: {
-        'book': book,
-        'chapter': chapter,
-        'verse_start': verseStart,
-        'verse_end': verseEnd,
-        'color_hex': colorHex,
-        'label': ?label,
-      });
+      final r = await _dio.post(
+        '/v2/highlights',
+        data: {
+          'book': book,
+          'chapter': chapter,
+          'verse_start': verseStart,
+          'verse_end': verseEnd,
+          'color_hex': colorHex,
+          'label': ?label,
+        },
+      );
       return VerseHighlight.fromJson(r.data['data'] as Map<String, dynamic>);
     } catch (e) {
       _fail(e);
@@ -317,8 +408,13 @@ class ApiClient {
 
   Future<HighlightColorInfo> renameHighlightColor(int id, String label) async {
     try {
-      final r = await _dio.patch('/v2/highlight-colors/$id', data: {'label': label});
-      return HighlightColorInfo.fromJson(r.data['data'] as Map<String, dynamic>);
+      final r = await _dio.patch(
+        '/v2/highlight-colors/$id',
+        data: {'label': label},
+      );
+      return HighlightColorInfo.fromJson(
+        r.data['data'] as Map<String, dynamic>,
+      );
     } catch (e) {
       _fail(e);
     }
@@ -327,8 +423,11 @@ class ApiClient {
 
 // --- Providers de datos ---
 
-final translationsListProvider = FutureProvider<List<BibleTranslationOption>>((ref) {
+final translationsListProvider = FutureProvider<List<BibleTranslationOption>>((
+  ref,
+) {
   ref.watch(localeProvider);
+  ref.watch(authProvider);
   return ref.watch(apiProvider).translations();
 });
 
@@ -342,7 +441,9 @@ final meProvider = FutureProvider<MeProfile?>((ref) async {
   if (!kIsWeb) {
     try {
       await Purchases.logIn(profile.id.toString());
-    } catch (_) {} // RevenueCat no configurado (falta --dart-define) o error de red
+    } catch (
+      _
+    ) {} // RevenueCat no configurado (falta --dart-define) o error de red
   }
   return profile;
 });
@@ -352,30 +453,46 @@ final meProvider = FutureProvider<MeProfile?>((ref) async {
 /// Active StreamPlan — full summary including nodes.
 final streamPlanProvider = FutureProvider<StreamPlanSummary>((ref) {
   ref.watch(localeProvider);
+  ref.watch(authProvider);
   return ref.watch(apiProvider).streamPlan();
 });
 
 /// Single CRS node detail (for reader screen).
 /// Family key: (planId, nodeId)
-final crsNodeProvider = FutureProvider.family<CrsNodeDetail, (int, int)>((ref, key) {
+final crsNodeProvider = FutureProvider.family<CrsNodeDetail, (int, int)>((
+  ref,
+  key,
+) {
+  ref.watch(authProvider);
   final (planId, nodeId) = key;
   return ref.watch(apiProvider).crsNode(planId, nodeId);
 });
 
 /// Compare group detail.
-final compareGroupProvider = FutureProvider.family<CompareGroupDetail, int>((ref, groupId) {
+final compareGroupProvider = FutureProvider.family<CompareGroupDetail, int>((
+  ref,
+  groupId,
+) {
   return ref.watch(apiProvider).compareGroup(groupId);
 });
 
 /// Passage text for a reading block (legacy v2 endpoint).
 /// Family key: blockId
-final passageTextProvider = FutureProvider.family<PassageText, int>((ref, blockId) {
+final passageTextProvider = FutureProvider.family<PassageText, int>((
+  ref,
+  blockId,
+) {
+  ref.watch(authProvider);
   final translation = ref.watch(translationProvider) ?? 'WEB';
   return ref.watch(apiProvider).passageText(blockId, translation: translation);
 });
 
 /// Full verse text for a reading block via the new /api/readings/{blockId} endpoint.
-final readingBlockProvider = FutureProvider.family<ReadingBlockDetail, int>((ref, blockId) {
+final readingBlockProvider = FutureProvider.family<ReadingBlockDetail, int>((
+  ref,
+  blockId,
+) {
+  ref.watch(authProvider);
   ref.watch(translationProvider);
   return ref.watch(apiProvider).readingBlock(blockId);
 });
@@ -384,13 +501,15 @@ final readingBlockProvider = FutureProvider.family<ReadingBlockDetail, int>((ref
 /// Family key: (osisCode, chapterNumber)
 final canonicalChapterProvider =
     FutureProvider.family<CanonicalChapterContent, (String, int)>((ref, key) {
-  final (osisCode, chapter) = key;
-  ref.watch(translationProvider);
-  return ref.watch(apiProvider).canonicalChapter(osisCode, chapter);
-});
+      final (osisCode, chapter) = key;
+      ref.watch(authProvider);
+      ref.watch(translationProvider);
+      return ref.watch(apiProvider).canonicalChapter(osisCode, chapter);
+    });
 
 /// Canonical + narrative progress summary.
 final progressSummaryProvider = FutureProvider<ProgressSummary>((ref) {
+  ref.watch(authProvider);
   return ref.watch(apiProvider).progressSummary();
 });
 
@@ -399,24 +518,24 @@ final progressSummaryProvider = FutureProvider<ProgressSummary>((ref) {
 /// Family key: (planId, nodeId)
 final neighborNodesProvider =
     Provider.family<({int? prevId, int? nextId}), (int, int)>((ref, key) {
-  final (_, nodeId) = key;
-  final planAsync = ref.watch(streamPlanProvider);
-  return planAsync.maybeWhen(
-    data: (plan) {
-      final mainNodes = plan.nodes.where((n) => n.isMainStreamNode).toList()
-        ..sort((a, b) {
-          return a.rank.compareTo(b.rank);
-        });
-      final idx = mainNodes.indexWhere((n) => n.id == nodeId);
-      if (idx < 0) return (prevId: null, nextId: null);
-      return (
-        prevId: idx > 0 ? mainNodes[idx - 1].id : null,
-        nextId: idx < mainNodes.length - 1 ? mainNodes[idx + 1].id : null,
+      final (_, nodeId) = key;
+      final planAsync = ref.watch(streamPlanProvider);
+      return planAsync.maybeWhen(
+        data: (plan) {
+          final mainNodes = plan.nodes.where((n) => n.isMainStreamNode).toList()
+            ..sort((a, b) {
+              return a.rank.compareTo(b.rank);
+            });
+          final idx = mainNodes.indexWhere((n) => n.id == nodeId);
+          if (idx < 0) return (prevId: null, nextId: null);
+          return (
+            prevId: idx > 0 ? mainNodes[idx - 1].id : null,
+            nextId: idx < mainNodes.length - 1 ? mainNodes[idx + 1].id : null,
+          );
+        },
+        orElse: () => (prevId: null, nextId: null),
       );
-    },
-    orElse: () => (prevId: null, nextId: null),
-  );
-});
+    });
 
 // ─── Verse highlights ────────────────────────────────────────────────────
 
@@ -424,11 +543,16 @@ final neighborNodesProvider =
 /// the reader. Empty (no network call) when the user isn't logged in.
 /// Family key: (osisCode, chapterNumber)
 final chapterHighlightsProvider =
-    FutureProvider.family<List<VerseHighlight>, (String, int)>((ref, key) async {
-  if (ref.watch(authProvider) == null) return [];
-  final (osisCode, chapter) = key;
-  return ref.watch(apiProvider).highlights(book: osisCode, chapter: chapter);
-});
+    FutureProvider.family<List<VerseHighlight>, (String, int)>((
+      ref,
+      key,
+    ) async {
+      if (ref.watch(authProvider) == null) return [];
+      final (osisCode, chapter) = key;
+      return ref
+          .watch(apiProvider)
+          .highlights(book: osisCode, chapter: chapter);
+    });
 
 /// All of the user's highlights across the whole Bible — used by "Mis subrayados".
 final allHighlightsProvider = FutureProvider<List<VerseHighlight>>((ref) async {
@@ -439,12 +563,14 @@ final allHighlightsProvider = FutureProvider<List<VerseHighlight>>((ref) async {
 /// Highlights filtered to a single color/label.
 final highlightsByColorProvider =
     FutureProvider.family<List<VerseHighlight>, int>((ref, colorId) async {
-  if (ref.watch(authProvider) == null) return [];
-  return ref.watch(apiProvider).highlights(colorId: colorId);
-});
+      if (ref.watch(authProvider) == null) return [];
+      return ref.watch(apiProvider).highlights(colorId: colorId);
+    });
 
 /// The user's saved highlight colors with their labels and usage counts.
-final highlightColorsProvider = FutureProvider<List<HighlightColorInfo>>((ref) async {
+final highlightColorsProvider = FutureProvider<List<HighlightColorInfo>>((
+  ref,
+) async {
   if (ref.watch(authProvider) == null) return [];
   return ref.watch(apiProvider).highlightColors();
 });

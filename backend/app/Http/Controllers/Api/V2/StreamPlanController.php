@@ -249,11 +249,24 @@ class StreamPlanController extends Controller
             'connections' => $content?->connections ?? [],
             'sources'     => $content?->sources ?? [],
             'version'     => $content?->content_version,
+            // Distingue contenido generado automáticamente (heurística/IA) de
+            // contenido con revisión editorial — la app debe etiquetarlo.
+            'generated'   => str_starts_with((string) $content?->content_version, 'auto-'),
         ];
     }
 
     private function formatSpiritOfProphecy($crs, string $locale): array
     {
+        // Bloqueo por licencia: traducciones al español de EGW y términos del
+        // API sin verificar. Ver config/features.php y docs/legal/.
+        if (! config('features.spirit_of_prophecy')) {
+            return [
+                'locale'   => null,
+                'excerpts' => [],
+                'blocked'  => 'license_unverified',
+            ];
+        }
+
         $content = $crs->spiritOfProphecyContents->firstWhere('locale', $locale)
             ?? $crs->spiritOfProphecyContents->first();
 
@@ -276,6 +289,9 @@ class StreamPlanController extends Controller
         $translationCode = $request->query('audio_translation', $request->query('translation', 'NVI'));
         $translation = Translation::where('code', $translationCode)
             ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+            // Gate de licencia: no servir narraciones de traducciones sin
+            // licencia comprobada (p.ej. NVI) fuera de cuentas de prueba.
+            ->when(! $includeTestOnly, fn ($q) => $q->where('can_display_full_text', true))
             ->first();
 
         if (! $translation || $blockIds->isEmpty()) {

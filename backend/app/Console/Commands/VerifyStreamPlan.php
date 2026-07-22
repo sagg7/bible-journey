@@ -37,7 +37,7 @@ class VerifyStreamPlan extends Command
         ];
 
         // ── Gate 1: Structural ────────────────────────────────────────────────
-        $this->line('  [1/4] Structural coverage…');
+        $this->line('  [1/5] Structural coverage…');
         $structural = $this->runStructural($planId);
         $report['gates']['structural'] = $structural;
         if (! $structural['passed']) {
@@ -48,7 +48,7 @@ class VerifyStreamPlan extends Command
         }
 
         // ── Gate 2: Text ──────────────────────────────────────────────────────
-        $this->line('  [2/4] Text coverage…');
+        $this->line('  [2/5] Text coverage…');
         $text = $this->runText($planId);
         $report['gates']['text'] = $text;
         if (! $text['passed']) {
@@ -59,7 +59,7 @@ class VerifyStreamPlan extends Command
         }
 
         // ── Gate 3: Navigation ────────────────────────────────────────────────
-        $this->line('  [3/4] Navigation…');
+        $this->line('  [3/5] Navigation…');
         $nav = $this->runNavigation($planId);
         $report['gates']['navigation'] = $nav;
         if (! $nav['passed']) {
@@ -70,13 +70,29 @@ class VerifyStreamPlan extends Command
         }
 
         // ── Gate 4: Reading modes ─────────────────────────────────────────────
-        $this->line('  [4/4] Reading modes…');
+        $this->line('  [4/5] Reading modes…');
         $modes = $this->runModes($planId, $nav, $text);
         $report['gates']['modes'] = $modes;
         if (! $modes['passed']) {
             $report['overall'] = 'fail';
             foreach ($modes['issues'] as $i) {
                 $report['blocking_issues'][] = "modes: {$i}";
+            }
+        }
+
+        // ── Gate 5: Ordering (eras + parallel links) ─────────────────────────
+        // Convierte en invariante verificado lo que antes era implícito: el
+        // orden de eras del stream principal nunca retrocede, y todo
+        // parallel_link aprobado deja a su fuente DESPUÉS de su ancla. Detecta
+        // nodos "appended at end" (era_slug fuera de ERA_CANONICAL_ORDER,
+        // reposicionamientos sin resolver) antes de publicar.
+        $this->line('  [5/5] Ordering…');
+        $ordering = $this->runOrdering($planId);
+        $report['gates']['ordering'] = $ordering;
+        if (! $ordering['passed']) {
+            $report['overall'] = 'fail';
+            foreach ($ordering['issues'] as $i) {
+                $report['blocking_issues'][] = "ordering: {$i}";
             }
         }
 
@@ -391,6 +407,76 @@ class VerifyStreamPlan extends Command
 
     // ── Report formatters ─────────────────────────────────────────────────────
 
+    /**
+     * Gate 5 — Ordering: invariantes de orden del plan compilado.
+     * 1. El sort de eras del stream principal es monotónicamente no-decreciente
+     *    al recorrer los nodos por rank (detecta nodos "appended at end").
+     * 2. Cada parallel_link aprobado (entre CRS distintos) deja la fuente
+     *    (ventana literaria) DESPUÉS de su ancla histórica.
+     */
+    private function runOrdering(int $planId): array
+    {
+        $issues = [];
+
+        // 1. Orden de eras por PRIMERA APARICIÓN (misma semántica que el
+        // endpoint /chronological, que agrupa por user_facing_era en orden de
+        // primera aparición). Los nodos individuales pueden oscilar (ventanas
+        // literarias reposicionadas junto a su ancla de otra era); lo que no
+        // puede pasar es que una era nueva aparezca con sort menor que una era
+        // ya abierta.
+        $eraFirstAppearance = DB::table('stream_plan_nodes')
+            ->where('plan_id', $planId)
+            ->where('is_main_stream_node', 1)
+            ->whereNotNull('user_facing_era_sort')
+            ->selectRaw('user_facing_era, user_facing_era_sort, MIN(rank) as first_rank')
+            ->groupBy('user_facing_era', 'user_facing_era_sort')
+            ->orderBy('first_rank')
+            ->get();
+
+        $eraViolations = 0;
+        $firstViolation = null;
+        $maxSort = null;
+        foreach ($eraFirstAppearance as $era) {
+            if ($maxSort !== null && $era->user_facing_era_sort < $maxSort) {
+                $eraViolations++;
+                $firstViolation ??= "'{$era->user_facing_era}' (sort {$era->user_facing_era_sort}, primer rank {$era->first_rank}) aparece después de sort {$maxSort}";
+            }
+            $maxSort = max($maxSort ?? 0, (int) $era->user_facing_era_sort);
+        }
+        if ($eraViolations > 0) {
+            $issues[] = "{$eraViolations} era(s) rompen el orden de primera aparición — primera: {$firstViolation}";
+        }
+
+        // 2. Links aprobados: fuente después del ancla
+        $links = DB::table('parallel_links as pl')
+            ->join('reading_blocks as sb', 'sb.id', '=', 'pl.source_block_id')
+            ->join('reading_blocks as tb', 'tb.id', '=', 'pl.target_block_id')
+            ->join('stream_plan_nodes as sn', function ($j) use ($planId) {
+                $j->on('sn.crs_id', '=', 'sb.crs_id')->where('sn.plan_id', '=', $planId);
+            })
+            ->join('stream_plan_nodes as tn', function ($j) use ($planId) {
+                $j->on('tn.crs_id', '=', 'tb.crs_id')->where('tn.plan_id', '=', $planId);
+            })
+            ->where('pl.approved', 1)
+            ->whereColumn('sb.crs_id', '!=', 'tb.crs_id')
+            ->select('sn.rank as source_rank', 'tn.rank as target_rank', 'pl.id as link_id')
+            ->get();
+
+        $misplaced = $links->filter(fn ($l) => $l->source_rank <= $l->target_rank);
+        if ($misplaced->isNotEmpty()) {
+            $ids = $misplaced->pluck('link_id')->take(5)->implode(', ');
+            $issues[] = $misplaced->count() . " link(s) aprobados con la fuente antes de su ancla (links: {$ids}…)";
+        }
+
+        return [
+            'passed'               => empty($issues),
+            'era_order_violations' => $eraViolations,
+            'approved_links_total' => $links->count(),
+            'links_misplaced'      => $misplaced->count(),
+            'issues'               => $issues,
+        ];
+    }
+
     private function printSummary(array $report): void
     {
         $icon = fn($b) => $b ? '<fg=green>✓</>' : '<fg=red>✗</>';
@@ -428,6 +514,13 @@ class VerifyStreamPlan extends Command
         $this->line("│   {$icon($m['complete_chronological_reading']==='pass')} complete_chronological_reading = {$m['complete_chronological_reading']}");
         $this->line("│   {$icon($m['narrative_flow']==='pass')} narrative_flow                = {$m['narrative_flow']}");
         $this->line("│   {$icon($m['canonical_reading']==='pass')} canonical_reading             = {$m['canonical_reading']}");
+
+        if (isset($report['gates']['ordering'])) {
+            $o = $report['gates']['ordering'];
+            $this->line("│ Ordering:");
+            $this->line("│   {$icon($o['era_order_violations']===0)} era_order_violations          = {$o['era_order_violations']}");
+            $this->line("│   {$icon($o['links_misplaced']===0)} links_misplaced               = {$o['links_misplaced']}/{$o['approved_links_total']}");
+        }
 
         $overall = $report['overall'] === 'pass'
             ? '<fg=green;options=bold>PASS</>'

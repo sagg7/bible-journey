@@ -56,6 +56,18 @@ class CrsForm
                 ->required()
                 ->placeholder('monarquia_unida'),
 
+            TextInput::make('approximate_date_start')
+                ->label('Fecha aprox. (inicio)')
+                ->placeholder('c. 1025 a.C.'),
+
+            TextInput::make('approximate_date_end')
+                ->label('Fecha aprox. (fin)')
+                ->placeholder('c. 1010 a.C.'),
+
+            Select::make('date_confidence')
+                ->label('Certeza de la fecha')
+                ->options(self::CONFIDENCE_OPTIONS),
+
             TextInput::make('sort_key')
                 ->label('Clave de orden (sort_key)')
                 ->numeric()

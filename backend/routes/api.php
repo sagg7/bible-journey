@@ -19,8 +19,9 @@ use App\Http\Controllers\Api\V2\StreamPlanController;
 use Illuminate\Support\Facades\Route;
 
 // --- Público (lectura), con idioma resuelto por el middleware SetLocale ---
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Throttle: frena fuerza bruta y registro masivo (por IP).
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
 Route::post('/webhooks/revenuecat', [RevenueCatWebhookController::class, 'handle']);
 
@@ -34,11 +35,13 @@ Route::get('/characters/{character:slug}', [CharacterController::class, 'show'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::delete('/me', [AuthController::class, 'destroy'])->middleware('throttle:3,1');
 
     Route::get('/me/progress', [ProgressController::class, 'show']);
     Route::post('/me/progress/complete', [ProgressController::class, 'complete']);
 
-    Route::post('/events/{event:slug}/ask', [EzraController::class, 'ask']);
+    // Throttle: cada pregunta a Ezra cuesta tokens del proveedor LLM.
+    Route::post('/events/{event:slug}/ask', [EzraController::class, 'ask'])->middleware('throttle:20,1');
 });
 
 // ─── Readings (bible text — public, no auth required) ───────────────────────
@@ -64,7 +67,8 @@ Route::prefix('v2')->middleware('auth:sanctum')->group(function () {
     Route::post('/progress/blocks/{blockId}',   [ProgressV2Controller::class, 'markBlock']);
     Route::post('/progress/nodes/{nodeId}',     [ProgressV2Controller::class, 'markNodeState']);
     Route::get('/progress/summary',             [ProgressV2Controller::class, 'summary']);
-    Route::post('/ezra/answer',                 [EzraV2Controller::class, 'answer']);
+    // Throttle: cada pregunta a Ezra cuesta tokens del proveedor LLM.
+    Route::post('/ezra/answer',                 [EzraV2Controller::class, 'answer'])->middleware('throttle:20,1');
 
     Route::get('/highlights',                   [HighlightController::class, 'index']);
     Route::post('/highlights',                  [HighlightController::class, 'store']);

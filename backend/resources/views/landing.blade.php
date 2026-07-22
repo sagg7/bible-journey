@@ -133,7 +133,7 @@
 
 <footer>
     <div class="wrap">
-        <p><a href="/privacy">Política de privacidad</a></p>
+        <p><a href="/privacy">Política de privacidad</a> · <a href="/terms">Términos de uso</a></p>
         <p>&copy; {{ date('Y') }} Bible Journey · Codeshore</p>
     </div>
 </footer>

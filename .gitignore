@@ -14,6 +14,7 @@ backend/public/build/
 backend/public/hot
 backend/bootstrap/cache/*.php
 backend/.phpactor.json
+data/backups/
 
 # --- Mobile (Flutter) ---
 mobile/.dart_tool/

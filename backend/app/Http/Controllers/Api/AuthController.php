@@ -65,6 +65,32 @@ class AuthController extends Controller
         return response()->json(['user' => $this->userPayload($request->user())]);
     }
 
+    /**
+     * Eliminación de cuenta (requisito de Google Play para apps con registro).
+     * Borra la cuenta y sus datos personales: progreso y highlights se
+     * eliminan en cascada (FK), las interacciones de IA quedan anonimizadas
+     * (FK SET NULL) y todos los tokens se revocan.
+     */
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->input('password'), $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['La contraseña no coincide.'],
+            ]);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json(['message' => 'Cuenta eliminada.']);
+    }
+
     private function userPayload(User $user): array
     {
         return [

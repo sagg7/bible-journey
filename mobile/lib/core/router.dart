@@ -70,6 +70,8 @@ final appRouter = GoRouter(
       builder: (c, s) => CrsReaderScreen(
         planId: int.parse(s.pathParameters['planId']!),
         nodeId: int.parse(s.pathParameters['nodeId']!),
+        initialChapter: int.tryParse(s.uri.queryParameters['chapter'] ?? ''),
+        initialVerse: int.tryParse(s.uri.queryParameters['verse'] ?? ''),
       ),
     ),
 
@@ -80,6 +82,7 @@ final appRouter = GoRouter(
       builder: (c, s) => CanonicalChapterScreen(
         osisCode: s.pathParameters['osisCode']!,
         chapter: int.parse(s.pathParameters['chapter']!),
+        initialVerse: int.tryParse(s.uri.queryParameters['verse'] ?? ''),
       ),
     ),
 
@@ -92,22 +95,14 @@ final appRouter = GoRouter(
         // Tab 0: Inicio
         StatefulShellBranch(
           navigatorKey: GlobalKey<NavigatorState>(debugLabel: 'inicio'),
-          routes: [
-            GoRoute(
-              path: '/',
-              builder: (c, s) => const HomeScreen(),
-            ),
-          ],
+          routes: [GoRoute(path: '/', builder: (c, s) => const HomeScreen())],
         ),
 
         // Tab 1: Leer
         StatefulShellBranch(
           navigatorKey: GlobalKey<NavigatorState>(debugLabel: 'leer'),
           routes: [
-            GoRoute(
-              path: '/leer',
-              builder: (c, s) => const ReadScreen(),
-            ),
+            GoRoute(path: '/leer', builder: (c, s) => const ReadScreen()),
           ],
         ),
 
@@ -135,10 +130,7 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           navigatorKey: GlobalKey<NavigatorState>(debugLabel: 'ezra'),
           routes: [
-            GoRoute(
-              path: '/ezra',
-              builder: (c, s) => const EzraTabScreen(),
-            ),
+            GoRoute(path: '/ezra', builder: (c, s) => const EzraTabScreen()),
           ],
         ),
       ],

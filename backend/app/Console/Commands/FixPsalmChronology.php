@@ -23,7 +23,9 @@ use Illuminate\Support\Facades\DB;
  */
 class FixPsalmChronology extends Command
 {
-    protected $signature = 'stream-plans:fix-psalm-chronology {planId} {--dry-run}';
+    use \App\Console\Commands\Concerns\GuardsPublishedPlans;
+
+    protected $signature = 'stream-plans:fix-psalm-chronology {planId} {--dry-run} {--force-published}';
 
     protected $description = 'Reposition linked literary-window CRS nodes next to their historical anchor in a published plan';
 
@@ -31,6 +33,10 @@ class FixPsalmChronology extends Command
     {
         $planId = (int) $this->argument('planId');
         $dryRun = (bool) $this->option('dry-run');
+
+        if (! $dryRun && ! $this->assertPlanIsMutable($planId, (bool) $this->option('force-published'))) {
+            return self::FAILURE;
+        }
 
         $links = ParallelLink::where('approved', true)
             ->with(['sourceBlock.crs', 'targetBlock.crs'])

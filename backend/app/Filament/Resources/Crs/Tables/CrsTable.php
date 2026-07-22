@@ -2,16 +2,18 @@
 
 namespace App\Filament\Resources\Crs\Tables;
 
+use App\Models\ChronologicalReadingSet;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class CrsTable
@@ -27,10 +29,21 @@ class CrsTable
                     ->weight('bold')
                     ->width('160px'),
 
+                TextColumn::make('estimated_date')
+                    ->label('Fecha estimada')
+                    ->getStateUsing(fn (ChronologicalReadingSet $record): ?string => $record->approximate_date_start)
+                    ->sortable(query: fn (Builder $query, string $direction) => $query
+                        ->orderByRaw('approximate_year_start IS NULL '.($direction === 'asc' ? 'DESC' : 'ASC'))
+                        ->orderBy('approximate_year_start', $direction)
+                        ->orderBy('id', $direction))
+                    ->placeholder('-')
+                    ->width('150px'),
+
                 TextColumn::make('title_es')
-                    ->label('Título (ES)')
+                    ->label('Titulo (ES)')
                     ->searchable()
-                    ->limit(50)
+                    ->sortable()
+                    ->limit(64)
                     ->wrap(),
 
                 TextColumn::make('era')
@@ -40,60 +53,62 @@ class CrsTable
                     ->color('gray'),
 
                 TextColumn::make('placement_confidence')
-                    ->label('Certeza ubicación')
+                    ->label('Certeza')
+                    ->sortable()
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'alta'               => 'success',
-                        'probable'           => 'info',
-                        'debatida'           => 'warning',
-                        'tradicion_popular'  => 'warning',
-                        'especulativa'       => 'danger',
-                        default              => 'gray',
+                        'alta' => 'success',
+                        'probable' => 'info',
+                        'debatida' => 'warning',
+                        'tradicion_popular' => 'warning',
+                        'especulativa' => 'danger',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('review_status')
                     ->label('Estado')
+                    ->sortable()
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'approved'      => 'success',
-                        'needs_review'  => 'warning',
-                        'rejected'      => 'danger',
-                        default         => 'gray',
+                        'approved' => 'success',
+                        'needs_review' => 'warning',
+                        'rejected' => 'danger',
+                        default => 'gray',
                     }),
 
-                TextColumn::make('blocks_count')
-                    ->label('Bloques')
-                    ->counts('blocks')
-                    ->alignCenter(),
-
                 ToggleColumn::make('is_premium')
-                    ->label('Premium'),
+                    ->label('Premium')
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('era')
                     ->label('Era')
-                    ->options(fn () => \App\Models\ChronologicalReadingSet::distinct()->pluck('era', 'era')->toArray()),
+                    ->options(fn () => ChronologicalReadingSet::query()
+                        ->distinct()
+                        ->orderBy('era')
+                        ->pluck('era', 'era')
+                        ->toArray()),
 
                 SelectFilter::make('placement_confidence')
                     ->label('Certeza')
                     ->options([
-                        'alta'              => 'Alta',
-                        'probable'          => 'Probable',
-                        'debatida'          => 'Debatida',
-                        'tradicion_popular' => 'Tradición popular',
-                        'especulativa'      => 'Especulativa',
+                        'alta' => 'Alta',
+                        'probable' => 'Probable',
+                        'debatida' => 'Debatida',
+                        'tradicion_popular' => 'Tradicion popular',
+                        'especulativa' => 'Especulativa',
                     ]),
 
                 SelectFilter::make('review_status')
-                    ->label('Estado de revisión')
+                    ->label('Estado de revision')
                     ->options([
-                        'approved'     => 'Aprobado',
-                        'needs_review' => 'Necesita revisión',
-                        'rejected'     => 'Rechazado',
+                        'approved' => 'Aprobado',
+                        'needs_review' => 'Necesita revision',
+                        'rejected' => 'Rechazado',
                     ]),
             ])
-            ->actions([EditAction::make()])
-            ->bulkActions([
+            ->recordActions([EditAction::make()])
+            ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('markFree')
                         ->label('Marcar como gratis')
@@ -108,7 +123,12 @@ class CrsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('sort_key')
+            ->defaultSort(fn (Builder $query, string $direction) => $query
+                ->orderBy('sort_key', $direction)
+                ->orderBy('id', $direction))
+            ->paginationMode(PaginationMode::Cursor)
+            ->paginationPageOptions([25, 50])
+            ->defaultPaginationPageOption(50)
             ->striped();
     }
 }

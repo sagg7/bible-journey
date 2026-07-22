@@ -51,6 +51,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   Future<void> _onSuccess(String token) async {
     await ref.read(authProvider.notifier).save(token);
+    ref.invalidate(meProvider);
+    try {
+      // Completa la identificacion de RevenueCat antes de abrir el paywall.
+      await ref.read(meProvider.future);
+    } catch (_) {
+      // El login de Bible Journey sigue siendo valido si la tienda no responde.
+    }
     if (!mounted) return;
     final next = widget.next;
     if (next != null && next.isNotEmpty) {
@@ -64,7 +71,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
     if (email.isEmpty || pass.isEmpty) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await ref.read(apiProvider).login(email, pass);
       await _onSuccess(data['token'] as String);
@@ -80,7 +90,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final email = _regEmailCtrl.text.trim();
     final pass = _regPassCtrl.text;
     if (name.isEmpty || email.isEmpty || pass.isEmpty) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await ref.read(apiProvider).register(name, email, pass);
       await _onSuccess(data['token'] as String);
@@ -99,7 +112,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         title: Text(s.t('account')),
         bottom: TabBar(
           controller: _tabs,
-          tabs: [Tab(text: s.t('login')), Tab(text: s.t('register'))],
+          tabs: [
+            Tab(text: s.t('login')),
+            Tab(text: s.t('register')),
+          ],
         ),
       ),
       body: TabBarView(
@@ -107,7 +123,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         children: [
           _FormTab(
             fields: [
-              _Field(label: s.t('email'), ctrl: _emailCtrl, keyboard: TextInputType.emailAddress),
+              _Field(
+                label: s.t('email'),
+                ctrl: _emailCtrl,
+                keyboard: TextInputType.emailAddress,
+              ),
               _Field(label: s.t('password'), ctrl: _passCtrl, obscure: true),
             ],
             submitLabel: s.t('login'),
@@ -118,7 +138,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           _FormTab(
             fields: [
               _Field(label: s.t('name'), ctrl: _nameCtrl),
-              _Field(label: s.t('email'), ctrl: _regEmailCtrl, keyboard: TextInputType.emailAddress),
+              _Field(
+                label: s.t('email'),
+                ctrl: _regEmailCtrl,
+                keyboard: TextInputType.emailAddress,
+              ),
               _Field(label: s.t('password'), ctrl: _regPassCtrl, obscure: true),
             ],
             submitLabel: s.t('register'),
@@ -187,16 +211,27 @@ class _FormTabState extends State<_FormTab> {
               ),
               child: Text(
                 widget.error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
               ),
             ),
             const SizedBox(height: 16),
           ],
           FilledButton(
             onPressed: widget.loading ? null : widget.onSubmit,
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+            ),
             child: widget.loading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : Text(widget.submitLabel),
           ),
         ],
@@ -211,14 +246,20 @@ class _FormTabState extends State<_FormTab> {
       controller: f.ctrl,
       keyboardType: f.keyboard,
       obscureText: isObscured,
-      textInputAction: i < widget.fields.length - 1 ? TextInputAction.next : TextInputAction.done,
-      onSubmitted: i == widget.fields.length - 1 ? (_) => widget.onSubmit() : null,
+      textInputAction: i < widget.fields.length - 1
+          ? TextInputAction.next
+          : TextInputAction.done,
+      onSubmitted: i == widget.fields.length - 1
+          ? (_) => widget.onSubmit()
+          : null,
       decoration: InputDecoration(
         labelText: f.label,
         border: const OutlineInputBorder(),
         suffixIcon: f.obscure
             ? IconButton(
-                icon: Icon(isObscured ? Icons.visibility_off : Icons.visibility),
+                icon: Icon(
+                  isObscured ? Icons.visibility_off : Icons.visibility,
+                ),
                 onPressed: () => setState(() => _obscured[i] = !isObscured),
               )
             : null,

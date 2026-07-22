@@ -24,6 +24,7 @@ class LocalProgress {
   final int? bookmarkNodeId;
   final String? bookmarkOsisCode;
   final int? bookmarkChapter;
+  final int? bookmarkVerse;
   final String? bookmarkLabel;
 
   const LocalProgress({
@@ -41,6 +42,7 @@ class LocalProgress {
     this.bookmarkNodeId,
     this.bookmarkOsisCode,
     this.bookmarkChapter,
+    this.bookmarkVerse,
     this.bookmarkLabel,
   });
 
@@ -56,6 +58,7 @@ class LocalProgress {
     int? nodeId,
     String? osisCode,
     int? chapter,
+    int? verse,
     String? label,
   }) => LocalProgress(
     completedBlockIds: completedBlockIds,
@@ -72,6 +75,7 @@ class LocalProgress {
     bookmarkNodeId: nodeId,
     bookmarkOsisCode: osisCode,
     bookmarkChapter: chapter,
+    bookmarkVerse: verse,
     bookmarkLabel: label,
   );
 
@@ -90,6 +94,7 @@ class LocalProgress {
     int? bookmarkNodeId,
     String? bookmarkOsisCode,
     int? bookmarkChapter,
+    int? bookmarkVerse,
     String? bookmarkLabel,
   }) => LocalProgress(
     completedBlockIds: completedBlockIds ?? this.completedBlockIds,
@@ -106,6 +111,7 @@ class LocalProgress {
     bookmarkNodeId: bookmarkNodeId ?? this.bookmarkNodeId,
     bookmarkOsisCode: bookmarkOsisCode ?? this.bookmarkOsisCode,
     bookmarkChapter: bookmarkChapter ?? this.bookmarkChapter,
+    bookmarkVerse: bookmarkVerse ?? this.bookmarkVerse,
     bookmarkLabel: bookmarkLabel ?? this.bookmarkLabel,
   );
 }
@@ -128,6 +134,7 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
   static const _kBookmarkNodeId = 'bj_bookmark_node_id';
   static const _kBookmarkOsis = 'bj_bookmark_osis';
   static const _kBookmarkChapter = 'bj_bookmark_chapter';
+  static const _kBookmarkVerse = 'bj_bookmark_verse';
   static const _kBookmarkLabel = 'bj_bookmark_label';
 
   @override
@@ -149,6 +156,7 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
       bookmarkNodeId: prefs.getInt(_kBookmarkNodeId),
       bookmarkOsisCode: prefs.getString(_kBookmarkOsis),
       bookmarkChapter: prefs.getInt(_kBookmarkChapter),
+      bookmarkVerse: prefs.getInt(_kBookmarkVerse),
       bookmarkLabel: prefs.getString(_kBookmarkLabel),
     );
   }
@@ -211,20 +219,37 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
     state = AsyncData(current.copyWith(readerBackground: background));
   }
 
-  Future<void> setBookmarkCrs(int planId, int nodeId, String label) async {
+  Future<void> setBookmarkCrs(
+    int planId,
+    int nodeId,
+    String label, {
+    int? chapter,
+    int? verse,
+  }) async {
     final current = await future;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kBookmarkType, 'crs');
     await prefs.setInt(_kBookmarkPlanId, planId);
     await prefs.setInt(_kBookmarkNodeId, nodeId);
     await prefs.remove(_kBookmarkOsis);
-    await prefs.remove(_kBookmarkChapter);
+    if (chapter != null) {
+      await prefs.setInt(_kBookmarkChapter, chapter);
+    } else {
+      await prefs.remove(_kBookmarkChapter);
+    }
+    if (verse != null) {
+      await prefs.setInt(_kBookmarkVerse, verse);
+    } else {
+      await prefs.remove(_kBookmarkVerse);
+    }
     await prefs.setString(_kBookmarkLabel, label);
     state = AsyncData(
       current.withBookmark(
         type: 'crs',
         planId: planId,
         nodeId: nodeId,
+        chapter: chapter,
+        verse: verse,
         label: label,
       ),
     );
@@ -233,13 +258,19 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
   Future<void> setBookmarkCanonical(
     String osisCode,
     int chapter,
-    String label,
-  ) async {
+    String label, {
+    int? verse,
+  }) async {
     final current = await future;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kBookmarkType, 'canonical');
     await prefs.setString(_kBookmarkOsis, osisCode);
     await prefs.setInt(_kBookmarkChapter, chapter);
+    if (verse != null) {
+      await prefs.setInt(_kBookmarkVerse, verse);
+    } else {
+      await prefs.remove(_kBookmarkVerse);
+    }
     await prefs.remove(_kBookmarkPlanId);
     await prefs.remove(_kBookmarkNodeId);
     await prefs.setString(_kBookmarkLabel, label);
@@ -248,6 +279,7 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
         type: 'canonical',
         osisCode: osisCode,
         chapter: chapter,
+        verse: verse,
         label: label,
       ),
     );
@@ -261,6 +293,7 @@ class LocalProgressNotifier extends AsyncNotifier<LocalProgress> {
     await prefs.remove(_kBookmarkNodeId);
     await prefs.remove(_kBookmarkOsis);
     await prefs.remove(_kBookmarkChapter);
+    await prefs.remove(_kBookmarkVerse);
     await prefs.remove(_kBookmarkLabel);
     state = AsyncData(current.withBookmark());
   }

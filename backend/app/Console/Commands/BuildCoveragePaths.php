@@ -190,7 +190,12 @@ class BuildCoveragePaths extends Command
                     'parent_era_sort'            => $best->user_facing_era_sort,
                     'entry_point_node_id'        => $entryPointId,
                     'display_mode'               => $pathMode,
-                    'complete_mode_required'     => (bool) $best->required_in_complete_mode,
+                    // Requerido si CUALQUIER bloque del plan que cubre este
+                    // capítulo lo exige — el primario puede ser una ventana
+                    // opcional mientras el fallback canónico sigue requerido.
+                    'complete_mode_required'     => $matching->contains(
+                        fn ($b) => (bool) $b->required_in_complete_mode
+                    ),
                     'narrative_flow_behavior'    => $nfBehavior,
                     'is_user_reachable'          => $isReachable,
                     'rationale'                  => $best->stream_role . ($best->user_facing_era ? ' — ' . $best->user_facing_era : ''),

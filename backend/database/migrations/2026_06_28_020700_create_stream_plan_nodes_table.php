@@ -21,6 +21,8 @@ return new class extends Migration
                 'full',           // all blocks shown
                 'narrative_flow', // only narrative_anchor shown, related deferred
                 'reference_only', // no full text — external Bible required
+                'unresolved_prophetic_window', // added 2026-06-29 (120000)
+                'historical_bridge',           // added 2026-06-29 (150000)
             ])->default('full');
 
             // State required for this node to be accessible

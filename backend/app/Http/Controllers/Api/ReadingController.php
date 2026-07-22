@@ -180,15 +180,21 @@ class ReadingController extends Controller
         $translationCode = $request->query('translation', 'RVA1909');
         $translation = Translation::where('code', $translationCode)->first();
 
+        // Un solo query para saber qué libros tienen texto en esta traducción
+        // (antes: un EXISTS por libro — 66 queries).
+        $bookIdsWithText = $translation
+            ? \Illuminate\Support\Facades\DB::table('bible_verses')
+                ->join('bible_chapters', 'bible_chapters.id', '=', 'bible_verses.chapter_id')
+                ->where('bible_verses.translation_id', $translation->id)
+                ->distinct()
+                ->pluck('bible_chapters.biblical_book_id')
+                ->flip()
+            : collect();
+
         $books = BiblicalBook::orderBy('canonical_order')
             ->get()
-            ->map(function ($book) use ($translation) {
-                $hasText = false;
-                if ($translation) {
-                    $hasText = BibleChapter::where('biblical_book_id', $book->id)
-                        ->whereHas('verses', fn($q) => $q->where('translation_id', $translation->id))
-                        ->exists();
-                }
+            ->map(function ($book) use ($bookIdsWithText) {
+                $hasText = $bookIdsWithText->has($book->id);
 
                 return [
                     'id'            => $book->id,
@@ -248,6 +254,9 @@ class ReadingController extends Controller
         $audioTranslationCode = $request->query('audio_translation', $request->query('translation', 'NVI'));
         $audioTranslation = Translation::where('code', $audioTranslationCode)
             ->when(! $includeTestOnly, fn ($q) => $q->where('is_test_only', false))
+            // Gate de licencia: no servir narraciones de traducciones sin
+            // licencia comprobada (p.ej. NVI) fuera de cuentas de prueba.
+            ->when(! $includeTestOnly, fn ($q) => $q->where('can_display_full_text', true))
             ->first();
 
         if (! $audioTranslation) {

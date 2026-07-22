@@ -14,10 +14,14 @@ return new class extends Migration
             $table->string('display_mode', 50)->nullable()->after('is_main_stream_node');
         });
 
-        // Extend the stream_plan_nodes enum to include the new unresolved_prophetic_window mode
-        DB::statement("ALTER TABLE stream_plan_nodes MODIFY COLUMN display_mode
-            ENUM('full','narrative_flow','reference_only','unresolved_prophetic_window')
-            NOT NULL DEFAULT 'full'");
+        // Extend the stream_plan_nodes enum to include the new unresolved_prophetic_window mode.
+        // MODIFY COLUMN is MySQL/MariaDB-only; on sqlite (tests) the create migration
+        // already declares the full value set, so nothing to do.
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+            DB::statement("ALTER TABLE stream_plan_nodes MODIFY COLUMN display_mode
+                ENUM('full','narrative_flow','reference_only','unresolved_prophetic_window')
+                NOT NULL DEFAULT 'full'");
+        }
     }
 
     public function down(): void
@@ -26,8 +30,10 @@ return new class extends Migration
             $table->dropColumn('display_mode');
         });
 
-        DB::statement("ALTER TABLE stream_plan_nodes MODIFY COLUMN display_mode
-            ENUM('full','narrative_flow','reference_only')
-            NOT NULL DEFAULT 'full'");
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+            DB::statement("ALTER TABLE stream_plan_nodes MODIFY COLUMN display_mode
+                ENUM('full','narrative_flow','reference_only')
+                NOT NULL DEFAULT 'full'");
+        }
     }
 };

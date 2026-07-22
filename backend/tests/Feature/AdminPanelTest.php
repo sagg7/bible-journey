@@ -30,7 +30,12 @@ class AdminPanelTest extends TestCase
         $this->seed([TranslationSeeder::class, BiblicalBookSeeder::class, DavidRouteSeeder::class]);
         $admin = $this->admin();
 
-        foreach (['translations', 'routes', 'historical-events', 'characters', 'locations'] as $slug) {
+        $slugs = [
+            'translations', 'historical-events', 'characters', 'locations',
+            'crs', 'stream-plans', 'institutions', 'institution-members', 'users',
+        ];
+
+        foreach ($slugs as $slug) {
             $this->actingAs($admin)->get("/admin/{$slug}")->assertOk();
         }
     }
@@ -42,7 +47,14 @@ class AdminPanelTest extends TestCase
         $this->seed([TranslationSeeder::class, BiblicalBookSeeder::class, DavidRouteSeeder::class]);
         $admin = $this->admin();
 
-        foreach (['translations', 'routes', 'historical-events', 'characters', 'locations'] as $slug) {
+        // stream-plans e institution-members no tienen página create (se
+        // generan vía CLI compile / relación), por eso no aparecen aquí.
+        $slugs = [
+            'translations', 'historical-events', 'characters', 'locations',
+            'crs', 'institutions', 'users',
+        ];
+
+        foreach ($slugs as $slug) {
             $this->actingAs($admin)->get("/admin/{$slug}/create")->assertOk();
         }
     }

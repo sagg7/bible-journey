@@ -468,6 +468,14 @@ class ImportRva1909 extends Command
                     $block->book ?? ''
                 );
 
+                // Referencia de libro completo (p.ej. "2 John" sin capítulo,
+                // típico en libros de un solo capítulo): cubrir 1..chapter_count.
+                // Sin esto quedan NULL y el reader no devuelve texto.
+                if ($startCh === null) {
+                    $startCh = 1;
+                    $endCh   = $bookObj->chapter_count ?: 1;
+                }
+
                 $block->start_book_id  = $bookObj->id;
                 $block->start_chapter  = $startCh;
                 $block->start_verse    = $startV;

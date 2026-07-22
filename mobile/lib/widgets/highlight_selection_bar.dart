@@ -33,14 +33,29 @@ class HighlightSelection extends ChangeNotifier {
   int? _focus;
 
   bool get isActive => _anchor != null;
-  int get rangeStart => _anchor == null ? 0 : (_focus == null ? _anchor! : (_anchor! <= _focus! ? _anchor! : _focus!));
-  int get rangeEnd => _anchor == null ? 0 : (_focus == null ? _anchor! : (_anchor! >= _focus! ? _anchor! : _focus!));
+  int get rangeStart => _anchor == null
+      ? 0
+      : (_focus == null
+            ? _anchor!
+            : (_anchor! <= _focus! ? _anchor! : _focus!));
+  int get rangeEnd => _anchor == null
+      ? 0
+      : (_focus == null
+            ? _anchor!
+            : (_anchor! >= _focus! ? _anchor! : _focus!));
 
-  bool contains(int verse) => isActive && verse >= rangeStart && verse <= rangeEnd;
+  bool contains(int verse) =>
+      isActive && verse >= rangeStart && verse <= rangeEnd;
 
   void beginAt(int verse) {
     _anchor = verse;
     _focus = verse;
+    notifyListeners();
+  }
+
+  void selectRange(int verseStart, int verseEnd) {
+    _anchor = verseStart;
+    _focus = verseEnd;
     notifyListeners();
   }
 
@@ -66,6 +81,7 @@ class HighlightSelectionBar extends ConsumerWidget {
   final List<BibleVerseItem> verses;
   final String? translationCode;
   final HighlightSelection selection;
+  final List<VerseHighlight> existingHighlights;
   final VoidCallback onSaved;
   final VoidCallback onCancel;
 
@@ -77,6 +93,7 @@ class HighlightSelectionBar extends ConsumerWidget {
     required this.verses,
     this.translationCode,
     required this.selection,
+    this.existingHighlights = const [],
     required this.onSaved,
     required this.onCancel,
   });
@@ -92,8 +109,13 @@ class HighlightSelectionBar extends ConsumerWidget {
     );
   }
 
-  Future<void> _apply(BuildContext context, WidgetRef ref, String hex, String defaultLabel,
-      Map<String, String?> existingLabels) async {
+  Future<void> _apply(
+    BuildContext context,
+    WidgetRef ref,
+    String hex,
+    String defaultLabel,
+    Map<String, String?> existingLabels,
+  ) async {
     String? label = existingLabels[hex.toUpperCase()];
     if (label == null) {
       label = await showDialog<String>(
@@ -104,7 +126,9 @@ class HighlightSelectionBar extends ConsumerWidget {
     }
 
     try {
-      await ref.read(apiProvider).createHighlight(
+      await ref
+          .read(apiProvider)
+          .createHighlight(
             book: bookOsisCode,
             chapter: chapter,
             verseStart: selection.rangeStart,
@@ -118,9 +142,50 @@ class HighlightSelectionBar extends ConsumerWidget {
       onSaved();
     } catch (e) {
       if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      }
+    }
+  }
+
+  Future<void> _removeHighlights(
+    BuildContext context,
+    WidgetRef ref,
+    List<VerseHighlight> highlights,
+  ) async {
+    if (highlights.isEmpty) return;
+
+    try {
+      final api = ref.read(apiProvider);
+      for (final highlight in highlights) {
+        await api.deleteHighlight(highlight.id);
+      }
+
+      ref.invalidate(chapterHighlightsProvider((bookOsisCode, chapter)));
+      ref.invalidate(highlightColorsProvider);
+      ref.invalidate(allHighlightsProvider);
+      for (final colorId in highlights.map((h) => h.color.id).toSet()) {
+        ref.invalidate(highlightsByColorProvider(colorId));
+      }
+
+      onSaved();
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar: $e')),
+          SnackBar(
+            content: Text(
+              highlights.length == 1
+                  ? 'Subrayado quitado.'
+                  : 'Subrayados quitados.',
+            ),
+          ),
         );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo quitar: $e')));
       }
     }
   }
@@ -128,12 +193,22 @@ class HighlightSelectionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? BjColors.textPrimaryDark : BjColors.textPrimaryLight;
+    final textColor = isDark
+        ? BjColors.textPrimaryDark
+        : BjColors.textPrimaryLight;
     final isLoggedIn = ref.watch(authProvider) != null;
     final colorsAsync = ref.watch(highlightColorsProvider);
     final existingLabels = <String, String?>{
       for (final c in colorsAsync.value ?? []) c.hex.toUpperCase(): c.label,
     };
+    final removableHighlights = existingHighlights
+        .where(
+          (h) =>
+              h.chapter == chapter &&
+              h.verseStart <= selection.rangeEnd &&
+              h.verseEnd >= selection.rangeStart,
+        )
+        .toList();
 
     final range = selection.rangeStart == selection.rangeEnd
         ? 'Versículo ${selection.rangeStart}'
@@ -153,16 +228,46 @@ class HighlightSelectionBar extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(range,
-                      style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+                  Expanded(
+                    child: Text(
+                      range,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.ios_share, size: 20, color: textColor.withValues(alpha: 0.7)),
+                        icon: Icon(
+                          Icons.ios_share,
+                          size: 20,
+                          color: textColor.withValues(alpha: 0.7),
+                        ),
                         tooltip: 'Compartir',
                         onPressed: _share,
                       ),
-                      TextButton(onPressed: onCancel, child: const Text('Cancelar')),
+                      if (isLoggedIn && removableHighlights.isNotEmpty)
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          tooltip: 'Quitar subrayado',
+                          onPressed: () => _removeHighlights(
+                            context,
+                            ref,
+                            removableHighlights,
+                          ),
+                        ),
+                      TextButton(
+                        onPressed: onCancel,
+                        child: const Text('Cancelar'),
+                      ),
                     ],
                   ),
                 ],
@@ -185,21 +290,29 @@ class HighlightSelectionBar extends ConsumerWidget {
               else
                 Row(
                   children: kHighlightPalette
-                      .map((p) => Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: GestureDetector(
-                              onTap: () => _apply(context, ref, p.$1, p.$2, existingLabels),
-                              child: Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: hexToColor(p.$1),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.black12),
-                                ),
+                      .map(
+                        (p) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => _apply(
+                              context,
+                              ref,
+                              p.$1,
+                              p.$2,
+                              existingLabels,
+                            ),
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: hexToColor(p.$1),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.black12),
                               ),
                             ),
-                          ))
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
             ],
@@ -220,8 +333,9 @@ class _LabelDialog extends StatefulWidget {
 }
 
 class _LabelDialogState extends State<_LabelDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initial);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initial,
+  );
 
   @override
   void dispose() {
@@ -237,7 +351,10 @@ class _LabelDialogState extends State<_LabelDialog> {
           Container(
             width: 20,
             height: 20,
-            decoration: BoxDecoration(color: hexToColor(widget.hex), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: hexToColor(widget.hex),
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 10),
           const Text('Nombrar este color'),

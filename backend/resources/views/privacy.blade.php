@@ -17,7 +17,7 @@
 
 <div class="lang-block">
 <h1>Bible Journey — Política de Privacidad</h1>
-<p><em>Última actualización: 3 de julio de 2026</em></p>
+<p><em>Última actualización: 22 de julio de 2026</em></p>
 
 <h2>1. Quiénes somos</h2>
 <section>Bible Journey es una aplicación de lectura bíblica cronológica desarrollada por Codeshore. Este documento explica qué datos recolectamos, para qué los usamos y cómo podés controlarlos.</section>
@@ -30,6 +30,7 @@
         <li><strong>Progreso de lectura:</strong> capítulos y eventos completados, racha de días de lectura, y estado de avance por bloque de contenido.</li>
         <li><strong>Preguntas al asistente de estudio ("Ezra"):</strong> si usás esta función, el texto de tu pregunta se envía a un proveedor externo de inteligencia artificial (Groq o Anthropic) para generar una respuesta, junto con el contexto bíblico/histórico relevante. No se envían tus datos de perfil ni tu progreso de lectura, solo el texto que escribís.</li>
         <li><strong>Datos técnicos:</strong> dirección IP y user-agent del dispositivo, registrados por motivos de seguridad de la sesión.</li>
+        <li><strong>Datos de suscripción:</strong> estado, producto, fechas de compra y vencimiento y un identificador de cliente. Apple o Google procesa el pago; Bible Journey no recibe ni almacena los datos completos de tu tarjeta.</li>
     </ul>
 </section>
 
@@ -48,6 +49,7 @@
         <li><strong>Proveedores de IA</strong> (Groq / Anthropic): solo reciben el texto de las preguntas que hacés al asistente Ezra, para generar la respuesta.</li>
         <li><strong>Proveedores de correo transaccional</strong> (Postmark / Resend): para enviarte correos de la cuenta (verificación, recuperación de contraseña).</li>
         <li><strong>Infraestructura de hosting</strong> (AWS, Site5): almacenamiento de la base de datos y archivos de la app.</li>
+        <li><strong>Pagos y suscripciones</strong> (Apple, Google y RevenueCat): para procesar compras, restaurar acceso y mantener actualizado el estado de Premium.</li>
     </ul>
     Ninguno de estos proveedores usa tus datos para fines propios de publicidad.
 </section>
@@ -56,18 +58,19 @@
 <section>Mantenemos tu información mientras tu cuenta esté activa. Si solicitás la eliminación de tu cuenta, borramos tus datos personales dentro de un plazo razonable, salvo que la ley exija conservarlos por más tiempo.</section>
 
 <h2>6. Cómo eliminar tu cuenta</h2>
-<section>Actualmente no hay una opción de autoservicio dentro de la app. Para solicitar la eliminación de tu cuenta y tus datos, escribinos a <a href="mailto:garciasaulalejandro@gmail.com">garciasaulalejandro@gmail.com</a> desde el correo asociado a tu cuenta.</section>
+<section>Podés eliminar tu cuenta desde la app, en Inicio → Perfil → Eliminar cuenta. También podés iniciar una solicitud en <a href="/eliminar-cuenta">biblejourney-api.codeshore.net/eliminar-cuenta</a>. La eliminación de la cuenta no cancela automáticamente una suscripción activa; debés cancelarla desde Apple App Store o Google Play.</section>
 
 <h2>7. Menores de edad</h2>
 <section>Bible Journey no está dirigida específicamente a menores de 13 años y no recolectamos intencionalmente datos de menores de esa edad.</section>
 
 <h2>8. Contacto</h2>
 <section>Para consultas sobre privacidad, escribinos a <a href="mailto:garciasaulalejandro@gmail.com">garciasaulalejandro@gmail.com</a>.</section>
+<p>Consultá también nuestros <a href="/terms">Términos de uso</a>.</p>
 </div>
 
 <div class="lang-block">
 <h1>Bible Journey — Privacy Policy</h1>
-<p><em>Last updated: July 3, 2026</em></p>
+<p><em>Last updated: July 22, 2026</em></p>
 
 <h2>1. Who we are</h2>
 <section>Bible Journey is a chronological Bible reading app developed by Codeshore. This document explains what data we collect, why, and how you can control it.</section>
@@ -80,6 +83,7 @@
         <li><strong>Reading progress:</strong> completed chapters/events, reading streak, and per-block progress.</li>
         <li><strong>Questions to the study assistant ("Ezra"):</strong> if you use this feature, the text of your question is sent to a third-party AI provider (Groq or Anthropic) to generate an answer, along with relevant biblical/historical context. Your profile data or reading progress is not sent — only the text you type.</li>
         <li><strong>Technical data:</strong> IP address and device user-agent, logged for session security purposes.</li>
+        <li><strong>Subscription data:</strong> status, product, purchase and expiration dates, and a customer identifier. Apple or Google processes payment; Bible Journey does not receive or store your complete card details.</li>
     </ul>
 </section>
 
@@ -98,6 +102,7 @@
         <li><strong>AI providers</strong> (Groq / Anthropic): receive only the text of questions you ask the Ezra assistant, to generate a response.</li>
         <li><strong>Transactional email providers</strong> (Postmark / Resend): to send account-related emails (verification, password reset).</li>
         <li><strong>Hosting infrastructure</strong> (AWS, Site5): database and file storage for the app.</li>
+        <li><strong>Payments and subscriptions</strong> (Apple, Google, and RevenueCat): to process purchases, restore access, and keep Premium status current.</li>
     </ul>
     None of these providers use your data for their own advertising purposes.
 </section>
@@ -106,13 +111,14 @@
 <section>We retain your information while your account is active. If you request account deletion, we delete your personal data within a reasonable period, unless the law requires us to retain it longer.</section>
 
 <h2>6. How to delete your account</h2>
-<section>There is currently no in-app self-service option. To request deletion of your account and data, email <a href="mailto:garciasaulalejandro@gmail.com">garciasaulalejandro@gmail.com</a> from the address associated with your account.</section>
+<section>You can delete your account in the app under Home → Profile → Delete account. You can also start a request at <a href="/eliminar-cuenta">biblejourney-api.codeshore.net/eliminar-cuenta</a>. Deleting your account does not automatically cancel an active subscription; you must cancel it through the Apple App Store or Google Play.</section>
 
 <h2>7. Children</h2>
 <section>Bible Journey is not specifically directed at children under 13, and we do not knowingly collect data from children under that age.</section>
 
 <h2>8. Contact</h2>
 <section>For privacy questions, contact us at <a href="mailto:garciasaulalejandro@gmail.com">garciasaulalejandro@gmail.com</a>.</section>
+<p>See also our <a href="/terms">Terms of Use</a>.</p>
 </div>
 
 </body>

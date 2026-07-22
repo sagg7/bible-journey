@@ -6,7 +6,7 @@ use App\Filament\Resources\Crs\Pages\CreateCrs;
 use App\Filament\Resources\Crs\Pages\EditCrs;
 use App\Filament\Resources\Crs\Pages\ListCrs;
 use App\Filament\Resources\Crs\Schemas\CrsForm;
-use App\Filament\Resources\Crs\Tables\CrsTable;
+use App\Filament\Resources\Crs\Tables\CrsEventsTable;
 use App\Models\ChronologicalReadingSet;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,15 +18,15 @@ class CrsResource extends Resource
 {
     protected static ?string $model = ChronologicalReadingSet::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
-    protected static ?string $navigationLabel = 'Secuencias CRS';
+    protected static ?string $navigationLabel = 'Eventos';
 
-    protected static ?string $modelLabel = 'secuencia';
+    protected static ?string $modelLabel = 'evento';
 
-    protected static ?string $pluralModelLabel = 'secuencias CRS';
+    protected static ?string $pluralModelLabel = 'eventos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Canon';
+    protected static string|\UnitEnum|null $navigationGroup = 'Contenido';
 
     protected static ?int $navigationSort = 1;
 
@@ -42,7 +42,7 @@ class CrsResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return CrsTable::configure($table);
+        return CrsEventsTable::configure($table);
     }
 
     public static function getRelations(): array
